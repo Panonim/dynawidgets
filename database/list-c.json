@@ -1,0 +1,9 @@
+[
+  {
+    "title": "Chess.com Daily Puzzle",
+    "description": "Display daily chess puzzle from chess.com",
+    "author": "panonim",
+    "slug": "daily-chess-puzzle",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/daily-chess-puzzle/template.txt"
+  }
+]
