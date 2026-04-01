@@ -1,0 +1,8 @@
+<div style="text-align: center;">
+  <h3 style="font-size: 1.5rem; margin: 0 0 8px 0;">
+    <a href="{{ .JSON.String "url" }}" target="_blank" style="text-decoration: underline;">
+      {{ .JSON.String "title" }}
+    </a>
+  </h3>
+  <img src="{{ .JSON.String "image" }}" alt="Daily Chess Puzzle" style="max-height:auto; border-radius: 3px;">
+</div>
