@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - testing
+    paths:
+      - 'widgets/**'
 
 jobs:
   generate:
