@@ -10,7 +10,7 @@ on:
 jobs:
   generate:
     name: Generate database and README
-    runs-on: actions_linux_slim
+    runs-on: actions_linux
     permissions:
       contents: write
     steps:
