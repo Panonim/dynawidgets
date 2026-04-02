@@ -1,6 +1,1 @@
-height: 200px
-title: Random Dog
-cache: 2m
-url: https://dog.ceo/api/breeds/image/random
-template: |
-  <img src="{{ .JSON.String "message" }}"></img>
+<img src="{{ .JSON.String "message" }}"></img>
