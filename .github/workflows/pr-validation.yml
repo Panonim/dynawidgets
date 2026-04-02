@@ -7,7 +7,8 @@ on:
 jobs:
   check-target-branch:
     name: Check PR targets testing
-    runs-on: ubuntu-latest
+    runs-on: actions_linux_slim
+    if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +31,8 @@ jobs:
 
   check-changed-files:
     name: Check only widgets/ changed
-    runs-on: ubuntu-latest
+    runs-on: actions_linux_slim
+    if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,7 +67,8 @@ jobs:
 
   validate-widgets:
     name: Validate widget structure
-    runs-on: ubuntu-latest
+    runs-on: actions_linux_slim
+    if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
     steps:
       - uses: actions/checkout@v4
 

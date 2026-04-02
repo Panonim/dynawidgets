@@ -30,7 +30,7 @@ function generateIndex() {
     const meta = yaml.load(fs.readFileSync(metaPath, 'utf8'));
     if (!meta || !meta.title) continue;
 
-    const letter = meta.title[0].toLowerCase();
+    const letter = entry.name[0].toLowerCase();
     if (!groups[letter]) groups[letter] = [];
 
     groups[letter].push({
