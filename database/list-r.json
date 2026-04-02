@@ -1,0 +1,9 @@
+[
+  {
+    "title": "Animals Display",
+    "description": "Display random images of dogs.",
+    "author": "panonim",
+    "slug": "random-dog",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/random-dog/template.txt"
+  }
+]

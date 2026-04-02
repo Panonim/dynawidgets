@@ -1,0 +1,1 @@
+<img src="{{ .JSON.String "message" }}"></img>

@@ -4,15 +4,25 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
-  check-target-branch:
-    name: Check PR targets testing
-    runs-on: actions_linux_slim
+  pr-validation:
+    name: Check targeting -> Check Widgets/ Changed -> Validate
+    runs-on: ubuntu-slim
     if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Verify base branch
+      - name: Check targeting
         if: github.base_ref != 'testing'
         run: |
           echo "target_branch_failed=true" >> $GITHUB_ENV
@@ -29,23 +39,14 @@ jobs:
               body: '❌ **PR Validation Failed**\n\nPR must target the `testing` branch.'
             })
 
-  check-changed-files:
-    name: Check only widgets/ changed
-    runs-on: actions_linux_slim
-    if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Verify changed files
+      - name: Check Widgets/ Changed
         id: check_files
         run: |
-          changed=$(git diff --name-only origin/testing...HEAD)
+          changed=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" HEAD)
           echo "Changed files:"
           echo "$changed"
 
-          invalid=$(echo "$changed" | grep -v '^widgets/' || true)
+          invalid=$(echo "$changed" | grep -v '^widgets/' | grep -v '^\s*$' || true)
           if [ -n "$invalid" ]; then
             echo "invalid_files<<EOF" >> $GITHUB_OUTPUT
             echo "$invalid" >> $GITHUB_OUTPUT
@@ -65,30 +66,21 @@ jobs:
               body: `❌ **PR Validation Failed**\n\nOnly files under \`widgets/\` may be changed in a PR.\n\nThe following files are not allowed:\n\`\`\`\n${invalidFiles}\n\`\`\``
             })
 
-  validate-widgets:
-    name: Validate widget structure
-    runs-on: actions_linux_slim
-    if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
-    steps:
-      - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Validate widgets
+      - name: Validate
         id: validate
         run: |
+          npm ci
           node scripts/validate-widgets.js > validation.txt 2>&1 || {
             cat validation.txt
             exit 1
           }
 
       - uses: actions/github-script@v7
-        if: failure()
+        if: failure() && steps.validate.outcome == 'failure'
         with:
           script: |
             const fs = require('fs');
