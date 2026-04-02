@@ -5,9 +5,13 @@ Read [contributing](contributing.md) before opening a pr or else...
 # --- WIDGETS LIST ---
 <!-- AUTO-GENERATED:START -->
 ## Search
-[C](#c)
+[A](#a) | [C](#c)
+
+## A
+- [**Animals Display**](widgets/random-dog/widget.md) — Display random images of dogs.
+  - Author: panonim
 
 ## C
-- **Chess.com Daily Puzzle** — Display daily chess puzzle from chess.com
+- [**Chess.com Daily Puzzle**](widgets/daily-chess-puzzle/widget.md) — Display daily chess puzzle from chess.com
   - Author: panonim
 <!-- AUTO-GENERATED:END -->
