@@ -7,7 +7,7 @@ on:
 jobs:
   pr-validation:
     name: Check targeting -> Check Widgets/ Changed -> Validate
-    runs-on: actions_linux
+    runs-on: ubuntu-slim
     if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
     steps:
       - uses: actions/checkout@v4
