@@ -401,6 +401,45 @@
       return result.join("\n").trim();
     }
 
+    function extractAdditionalFields(yaml, excludedFields) {
+      const excluded = new Set(excludedFields);
+      const lines = yaml.split("\n");
+      const fields = [];
+      let inTemplateBlock = false;
+
+      for (const line of lines) {
+        if (line.trim().startsWith("template: |")) {
+          inTemplateBlock = true;
+          continue;
+        }
+
+        if (inTemplateBlock) {
+          if (line.startsWith("    ") || line.trim() === "") {
+            continue;
+          }
+
+          inTemplateBlock = false;
+        }
+
+        const match = line.match(/^\s*([a-zA-Z0-9-]+):\s*(.+)$/);
+
+        if (!match) {
+          continue;
+        }
+
+        const key = match[1];
+        const value = match[2].trim();
+
+        if (excluded.has(key)) {
+          continue;
+        }
+
+        fields.push({ key, value });
+      }
+
+      return fields;
+    }
+
     function convertWidget() {
       const input = document.getElementById("input").value;
       const author =
@@ -410,12 +449,21 @@
       const url = extractField(input, "url");
       const slug = slugify(title);
       const template = extractTemplate(input);
+      const additionalFields = extractAdditionalFields(input, [
+        "type",
+        "url",
+        "template"
+      ]);
 
       let templateTxt = template;
 
       if (url) {
         templateTxt += `\n\nrequired: |\n  url: ${url}`;
       }
+
+      const additionalConfig = additionalFields
+        .map(field => `  ${field.key}: ${field.value}`)
+        .join("\n");
 
       const metaYml = `title: ${title}
 description: Converted custom-api widget
@@ -427,7 +475,7 @@ author: ${author}`;
 \`\`\`yaml
 - type: dynawidgets
   widget: ${slug}
-\`\`\`
+${additionalConfig ? `${additionalConfig}\n` : ""}\`\`\`
 `;
 
       generated = {
