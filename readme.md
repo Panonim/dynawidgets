@@ -2,6 +2,8 @@ Dynacat -> https://github.com/Panonim/dynacat
 
 Read [contributing](contributing.md) before opening a pr or else...
 
+You can also visit https://widgets.artur.zone/ for automated conversion. 
+
 # --- WIDGETS LIST ---
 <!-- AUTO-GENERATED:START -->
 ## Search
