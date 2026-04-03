@@ -34,27 +34,56 @@ If you want to share a custom widget with the community, follow these steps:
 1. Fork the repository.
 2. Create a new directory under `widgets/` for your widget, using a clear name tied to the widget example: `dynacat-weather`.
 3. Follow the guidelines in this document.
-4. Add a `template.txt` file containing only the template body.Include only the text after `template: |`, not the `template: |` line itself.
+4. Add a `template.txt` file containing only the template body. Include only the text after `template: |`, not the `template: |` line itself.
 
    Wrong:
 
-   ```yaml
+    ```yaml
     - type: custom-api
-      title: Hourly Stats  
-      update-interval: 1h    # Updates every hour
+      title: Hourly Stats
+      update-interval: 1h # Updates every hour
       url: https://api.example.com/stats
       template: |
         <div>{{ .JSON.String "count" }}</div>
-   ```
+    ```
 
    Right:
 
+    ```text
+    <div>{{ .JSON.String "count" }}</div>
+    ```
+
+   **With required section:**
+
+    ```text
+    <div>{{ .JSON.String "count" }}</div>
+
+    required: |
+      url: https://api.example.com/stats
+    ```
+
+5. Add a `required:` section at the bottom of `template.txt` to specify default configuration values. This is optional but recommended for any API that requires a URL or other configuration. The format is YAML, with supported fields:
+   - `url`: The default API endpoint to fetch data from
+
+   When users add your widget to their config, they can override these defaults:
+
    ```yaml
-     <div>{{ .JSON.String "count" }}</div>
+   - type: dynawidgets
+     widget: your-widget-slug
+     # Uses the URL from required: section by default
    ```
-5. Add a `widget.md` in that directory with a preview of the widget, the YAML configuration, and any setup or usage notes needed to run it. Use existing widgets as a reference.
-6. Add a `preview.png` in the /images directory (optional).
-7. Add a `meta.yml` file with:
+
+   Or with a custom URL:
+
+   ```yaml
+   - type: dynawidgets
+     widget: your-widget-slug
+     url: https://custom-api.example.com/data
+   ```
+
+6. Add a `widget.md` in that directory with a preview of the widget, the YAML configuration, and any setup or usage notes needed to run it. Use existing widgets as a reference.
+7. Add a `preview.png` in the /images directory (optional).
+8. Add a `meta.yml` file with:
 
 ```yaml
 title: Your widget's title
@@ -62,7 +91,7 @@ description: A short description of the widget
 author: your-github-username
 ```
 
-8. Commit your changes, push them to your fork, and open a pull request against `testing`.
+9. Commit your changes, push them to your fork, and open a pull request against `testing`.
 
 ## Widget Guidelines
 

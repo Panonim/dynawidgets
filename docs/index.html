@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynacat Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <link rel="icon" type="image/x-icon" href="/assets/logo.png" />
+  <style>
+    :root {
+      --bg: #0f0f15;
+      --surface: #1a1a24;
+      --surface-hover: #242430;
+      --border: #2d2d38;
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --text-faint: #6b7280;
+      --accent: #9b6cb0;
+      --accent-border: rgba(155, 108, 176, 0.25);
+      --success: #4ade80;
+      --radius: 6px;
+      --radius-lg: 8px;
+      --scroll-thumb: #3a3a48;
+      --scroll-thumb-hover: #4b4b5d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: var(--bg);
+    }
+
+    body {
+      font-family: "Work Sans", Arial, sans-serif;
+      font-size: 15.5px;
+      line-height: 1.6;
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 85%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 48px 0;
+    }
+
+    h1 {
+      margin: 0 0 24px;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-top: 20px;
+    }
+
+    .block {
+      margin-bottom: 20px;
+    }
+
+    strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      min-height: 40px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 500px;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      background: rgba(155, 108, 176, 0.08);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--text-faint);
+    }
+
+    .output-block {
+      position: relative;
+    }
+
+    .code-container {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      padding-right: 52px;
+      max-height: 500px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font: inherit;
+      color: var(--text);
+      background: transparent;
+    }
+
+    .copy-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(36, 36, 48, 0.9);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      z-index: 2;
+      backdrop-filter: blur(6px);
+    }
+
+    .copy-icon svg {
+      width: 16px;
+      height: 16px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .copy-icon:hover {
+      background: rgba(155, 108, 176, 0.2);
+      border-color: var(--accent);
+    }
+
+    .copy-icon.copied {
+      background: var(--success);
+      border-color: rgba(74, 222, 128, 0.45);
+    }
+
+    .copy-icon.copied svg {
+      display: none;
+    }
+
+    .copy-icon.copied::after {
+      content: "✓";
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .download-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      font-size: 14px;
+      padding: 11px 16px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .download-button:hover {
+      background: #8a5a96;
+    }
+
+    .download-button:active {
+      transform: translateY(1px);
+    }
+
+    .download-button svg {
+      width: 16px;
+      height: 16px;
+      stroke: #ffffff;
+      fill: none;
+      stroke-width: 1.8;
+    }
+
+    /* Scrollbar styling */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scroll-thumb) transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--scroll-thumb);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--scroll-thumb-hover);
+      background-clip: padding-box;
+    }
+
+    @media (max-width: 1024px) {
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .container {
+        width: 90%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        width: 95%;
+        padding: 32px 0;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      textarea {
+        min-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dynacat Custom-api Widget Converter</h1>
+
+    <div class="grid">
+      <div>
+        <div class="block">
+          <strong>Input widget YAML</strong>
+          <textarea id="input">- type: custom-api
+  title: Hourly Stats
+  update-interval: 1h
+  url: https://api.example.com/stats
+  template: |
+    <div>{{ .JSON.String "count" }}</div>
+    <span>Updated hourly</span>
+          </textarea>
+        </div>
+
+        <div class="block">
+          <strong>GitHub author</strong>
+          <input id="author" type="text" value="your-github-username" />
+        </div>
+
+        <button class="download-button" onclick="downloadZip()">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 3V16M12 16L16 12M12 16L8 12" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 20H20" stroke-linecap="round"/>
+          </svg>
+          Download ZIP
+        </button>
+      </div>
+
+      <div>
+        <div class="block output-block">
+          <strong>Suggested folder</strong>
+          <div class="code-container">
+            <button class="copy-icon" onclick="copyToClipboard('slugOutput', this)" aria-label="Copy slug">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 8H18V18H8z"/>
+                <path d="M6 16H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+              </svg>
+            </button>
+            <pre id="slugOutput"></pre>
+          </div>
+        </div>
+
+        <div class="block output-block">
+          <strong>template.txt</strong>
+          <div class="code-container">
+            <button class="copy-icon" onclick="copyToClipboard('templateOutput', this)" aria-label="Copy template">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 8H18V18H8z"/>
+                <path d="M6 16H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+              </svg>
+            </button>
+            <pre id="templateOutput"></pre>
+          </div>
+        </div>
+
+        <div class="block output-block">
+          <strong>meta.yml</strong>
+          <div class="code-container">
+            <button class="copy-icon" onclick="copyToClipboard('metaOutput', this)" aria-label="Copy meta">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 8H18V18H8z"/>
+                <path d="M6 16H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+              </svg>
+            </button>
+            <pre id="metaOutput"></pre>
+          </div>
+        </div>
+
+        <div class="block output-block">
+          <strong>widget.md</strong>
+          <div class="code-container">
+            <button class="copy-icon" onclick="copyToClipboard('markdownOutput', this)" aria-label="Copy markdown">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 8H18V18H8z"/>
+                <path d="M6 16H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+              </svg>
+            </button>
+            <pre id="markdownOutput"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let generated = {
+      slug: "",
+      template: "",
+      meta: "",
+      markdown: ""
+    };
+
+    function slugify(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function extractField(yaml, field) {
+      const regex = new RegExp(`^\\s*${field}:\\s*(.+)$`, "m");
+      const match = yaml.match(regex);
+      return match ? match[1].trim() : "";
+    }
+
+    function extractTemplate(yaml) {
+      const lines = yaml.split("\n");
+      const start = lines.findIndex(line =>
+        line.trim().startsWith("template: |")
+      );
+
+      if (start === -1) return "";
+
+      const result = [];
+
+      for (let i = start + 1; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.trim() === "") {
+          result.push("");
+          continue;
+        }
+
+        if (!line.startsWith("    ")) break;
+        result.push(line.slice(4));
+      }
+
+      return result.join("\n").trim();
+    }
+
+    function convertWidget() {
+      const input = document.getElementById("input").value;
+      const author =
+        document.getElementById("author").value.trim() || "unknown";
+
+      const title = extractField(input, "title") || "Untitled Widget";
+      const url = extractField(input, "url");
+      const slug = slugify(title);
+      const template = extractTemplate(input);
+
+      let templateTxt = template;
+
+      if (url) {
+        templateTxt += `\n\nrequired: |\n  url: ${url}`;
+      }
+
+      const metaYml = `title: ${title}
+description: Converted custom-api widget
+author: ${author}`;
+
+      const widgetMd = `# ${title}
+
+## Configuration
+\`\`\`yaml
+- type: dynawidgets
+  widget: ${slug}
+\`\`\`
+`;
+
+      generated = {
+        slug,
+        template: templateTxt,
+        meta: metaYml,
+        markdown: widgetMd
+      };
+
+      document.getElementById("slugOutput").textContent = `widgets/${slug}/`;
+      document.getElementById("templateOutput").textContent = templateTxt;
+      document.getElementById("metaOutput").textContent = metaYml;
+      document.getElementById("markdownOutput").textContent = widgetMd;
+    }
+
+    function copyToClipboard(elementId, button) {
+      const text = document.getElementById(elementId).textContent;
+
+      navigator.clipboard.writeText(text).then(() => {
+        button.classList.add("copied");
+
+        setTimeout(() => {
+          button.classList.remove("copied");
+        }, 1500);
+      });
+    }
+
+    async function downloadZip() {
+      convertWidget();
+
+      const zip = new JSZip();
+      const folder = zip.folder(`widgets/${generated.slug}`);
+
+      folder.file("template.txt", generated.template);
+      folder.file("meta.yml", generated.meta);
+      folder.file("widget.md", generated.markdown);
+
+      const blob = await zip.generateAsync({ type: "blob" });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${generated.slug}.zip`;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(link.href);
+    }
+
+    document.getElementById("input").addEventListener("input", convertWidget);
+    document.getElementById("author").addEventListener("input", convertWidget);
+
+    convertWidget();
+  </script>
+</body>
+</html>
