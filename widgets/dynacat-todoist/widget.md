@@ -1,6 +1,6 @@
 # Todoist Dashboard
 
-A single consolidated `custom-api` widget for [Dynacat](https://github.com/Panonim/dynacat) that surfaces your Todoist productivity data at a glance:
+A single consolidated `custom-api` widget for [Dynacat](https://github.com/Panonim/dynacat) that displays your Todoist productivity data at a glance:
 
 - Karma score with trend indicator (↑ / ↓)
 - Tasks completed today vs. your daily goal
