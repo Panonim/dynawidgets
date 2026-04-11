@@ -38,9 +38,14 @@ Add the following to your Dynacat `.env` file:
 
 ---
 
-## Configuration
+## Usage
 
-Paste the contents of `widgets/todoist-dashboard.yml` into a column's `widgets:` list in your Dynacat `config.yml`:
+```yaml
+- type: dynawidgets
+  widget: todoist
+  title: Todoist
+  update-interval: 10m
+```
 
 ---
 
