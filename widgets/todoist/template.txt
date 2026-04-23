@@ -1,3 +1,7 @@
+<style>
+  .wk-dash-link { color: var(--color-primary); text-decoration: none; opacity: 0.65; transition: opacity 0.15s; }
+  .wk-dash-link:hover { opacity: 1; }
+</style>
 {{/* Tasks endpoint returns a bare array — try "." first, fall back to "results" */}}
 {{ $tasks := (.Subrequest "tasks").JSON.Array "." }}
 {{ if eq (len $tasks) 0 }}{{ $tasks = (.Subrequest "tasks").JSON.Array "results" }}{{ end }}
@@ -139,8 +143,10 @@
   {{ end }}
 
   {{/* ── Link to Todoist app ──────────────────────────────────── */}}
-  <div style="padding-top:8px;border-top:1px solid rgba(128,128,128,0.15);text-align:right">
-    <a href="https://app.todoist.com" target="_blank" class="color-subdue size-h6" style="opacity:0.6;transition:opacity 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">View Tasks on Todoist -&gt;</a>
+  <div class="flex justify-end">
+    <a href="https://app.todoist.com" target="_blank" class="wk-dash-link size-h6">
+      View Tasks on Todoist -&gt;
+    </a>
   </div>
 
 </div>
