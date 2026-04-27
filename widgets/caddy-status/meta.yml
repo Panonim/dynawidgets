@@ -1,0 +1,3 @@
+title: caddy-status
+description: Display Caddy status (upstreams, current requests, failed requests)
+author: whysofurious
