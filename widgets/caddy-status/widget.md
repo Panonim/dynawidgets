@@ -6,7 +6,7 @@ The widget is modeled after the [homepage caddy widget](https://gethomepage.dev/
 
 <details>
   <summary>Full column preview</summary>
-  <img src="images/preview-full.png" width="600px" />
+  <img src="images/preview-full.png" width="800px" />
 </details>
 
 <details>
