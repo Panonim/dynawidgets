@@ -4,8 +4,15 @@ This widget displays [Caddy](https://caddyserver.com) reverse proxy status, in p
 
 The widget is modeled after the [homepage caddy widget](https://gethomepage.dev/widgets/services/caddy/), and uses a similar structure to the Immich widget. Should work well in both full and small columns layouts.
 
-![](images/preview-full.png)
-![](images/preview-small.png)
+<details>
+  <summary>Full column preview</summary>
+  <img src="images/preview-full.png" width="600px" />
+</details>
+
+<details>
+  <summary>Small column preview</summary>
+  <img src="images/preview-small.png" width="300px" />
+</details>
 
 ```yaml
 - type: custom-api

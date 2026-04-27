@@ -4,8 +4,15 @@ This widget displays [Caddy](https://caddyserver.com) external and local links t
 
 The widget is modeled after the [cloudflare tunnels widget](https://github.com/glanceapp/community-widgets/blob/main/widgets/cloudflared-tunnels/README.md). Should work well in both full and small columns layouts.
 
-![](images/preview-full.png)
-![](images/preview-small.png)
+<details>
+  <summary>Full column preview</summary>
+  <img src="images/preview-full.png" width="600px" />
+</details>
+
+<details>
+  <summary>Small column preview</summary>
+  <img src="images/preview-small.png" width="300px" />
+</details>
 
 ```yaml
 - type: custom-api
