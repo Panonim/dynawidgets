@@ -1,0 +1,81 @@
+<style>
+  .wk-dash-link { color: var(--color-primary); text-decoration: none; opacity: 0.65; transition: opacity 0.15s; }
+  .wk-dash-link:hover { opacity: 1; }
+</style>
+<div class="flex flex-column gap-15">
+
+  {{/* Show API error if present (e.g. bad key) */}}
+  {{ if .JSON.String "error" }}
+  <span class="color-negative size-h6">{{ .JSON.String "error" }}</span>
+  {{ end }}
+
+  {{/* ── Summary header ── */}}
+  <div class="flex flex-column gap-10">
+    <div class="flex items-end gap-10">
+      <span class="size-h3 color-primary">{{ .JSON.String "data.human_readable_total" }}</span>
+      <span class="size-h6 color-subdue" style="padding-bottom:.2rem">Last 7 Days</span>
+    </div>
+    <div class="flex gap-20" style="padding-top:.5rem;border-top:1px solid var(--color-separator)">
+      <div class="flex flex-column gap-5">
+        <span class="size-h6 color-subdue uppercase">Daily Avg</span>
+        <span class="color-base">{{ .JSON.String "data.human_readable_daily_average" }}</span>
+      </div>
+      {{ if .JSON.Exists "data.best_day" }}
+      <div class="flex flex-column gap-5 cursor-help" data-popover-type="html">
+        <div data-popover-html="">{{ .JSON.String "data.best_day.date" }}</div>
+        <span class="size-h6 color-subdue uppercase">Best Day</span>
+        <span class="color-positive">{{ .JSON.String "data.best_day.text" }}</span>
+      </div>
+      {{ end }}
+    </div>
+  </div>
+
+  {{/* ── Languages ── */}}
+  {{ if .JSON.Exists "data.languages" }}
+  <div class="flex flex-column gap-10">
+    <span class="size-h5 color-subdue uppercase">Languages</span>
+    {{ range $i, $lang := .JSON.Array "data.languages" }}{{ if lt $i 5 }}
+    <div class="flex flex-column gap-5 cursor-help" data-popover-type="html">
+      <div data-popover-html="">{{ $lang.String "text" }}</div>
+      <div class="flex justify-between items-center">
+        <span class="size-h6 color-base text-truncate">{{ $lang.String "name" }}</span>
+        <span class="size-h6 color-subdue shrink-0" style="margin-left:.5rem">{{ $lang.Int "percent" }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-value" style="--percent:{{ $lang.Int "percent" }}"></div>
+      </div>
+    </div>
+    {{ end }}{{ end }}
+  </div>
+  {{ end }}
+
+  {{/* ── Projects ── */}}
+  {{ if .JSON.Exists "data.projects" }}
+  <div class="flex flex-column gap-10">
+    <span class="size-h5 color-subdue uppercase">Projects</span>
+    {{ range $i, $proj := .JSON.Array "data.projects" }}{{ if lt $i 5 }}
+    <div class="flex flex-column gap-5 cursor-help" data-popover-type="html">
+      <div data-popover-html="">{{ $proj.String "text" }}</div>
+      <div class="flex justify-between items-center">
+        <span class="size-h6 color-base text-truncate">{{ $proj.String "name" }}</span>
+        <span class="size-h6 color-subdue shrink-0" style="margin-left:.5rem">{{ $proj.Int "percent" }}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-value" style="--percent:{{ $proj.Int "percent" }}"></div>
+      </div>
+    </div>
+    {{ end }}{{ end }}
+  </div>
+  {{ end }}
+
+  {{/* ── Dashboard link ── */}}
+  <div class="flex justify-end">
+    <a href="https://wakatime.com/dashboard" class="wk-dash-link size-h6">
+      View Dashboard →
+    </a>
+  </div>
+
+</div>
+
+required: |
+  url: https://wakatime.com/api/v1/users/current/stats/last_7_days?api_key=${WAKATIME_API_KEY}

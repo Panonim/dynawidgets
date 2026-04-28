@@ -1,0 +1,36 @@
+{{ $usd := .JSON.Float "conversion_rates.USD" }}
+{{ $eur := .JSON.Float "conversion_rates.EUR" }}
+{{ $update := .JSON.String "time_last_update_utc" }}
+
+<div class="dynamic-columns list-gap-10 list-with-separator">
+
+  <div class="flex items-center justify-between gap-15 py-1">
+    <div class="min-width-0 grow">
+      <a class="color-highlight size-h3 block text-truncate">USD</a>
+      <div class="text-truncate opacity-40 text-xs">US Dollar</div>
+    </div>
+    <div class="market-values shrink-0">
+      <div class="size-h3 text-right color-highlight font-bold">${{ printf "%.4f" $usd }}</div>
+      <div class="text-right opacity-40 text-xs">1.00 CAD</div>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between gap-15 py-1">
+    <div class="min-width-0 grow">
+      <a class="color-highlight size-h3 block text-truncate">EUR</a>
+      <div class="text-truncate opacity-40 text-xs">Euro</div>
+    </div>
+    <div class="market-values shrink-0">
+      <div class="size-h3 text-right color-highlight font-bold">€{{ printf "%.4f" $eur }}</div>
+      <div class="text-right opacity-40 text-xs">1.00 CAD</div>
+    </div>
+  </div>
+
+  <div class="color-subdue size-h6 mt-2 pt-2 border-t border-white/5 text-center opacity-40 italic">
+    Synced: {{ printf "%.16s" $update }}
+  </div>
+
+</div>
+
+required: |
+  url: https://v6.exchangerate-api.com/v6/${HOMEPAGE_VAR_EXCHANGE_KEY}/latest/CAD
