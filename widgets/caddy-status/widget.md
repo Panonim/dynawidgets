@@ -15,32 +15,10 @@ The widget is modeled after the [homepage caddy widget](https://gethomepage.dev/
 </details>
 
 ```yaml
-- type: custom-api
+- type: dynawidgets
+  widget: caddy-status
   title: Caddy Status
   update-interval: 1m
-  url: http://${CADDY_ADMIN_URL}/reverse_proxy/upstreams
-  template: |
-    {{ $upstreams := .JSON.Array "" }}
-    {{ $requests := 0 }}
-    {{ $fails := 0 }}
-    {{ range $upstreams }}
-      {{ $requests = add $requests (.Int "num_requests") }}
-      {{ $fails = add $fails (.Int "fails") }}
-    {{ end }}
-     <div class="flex justify-between text-center">
-       <div class="flex-1">
-          <div class="color-highlight size-h3"> {{ len ($upstreams) }} </div>
-         <div class="size-h6">UPSTREAMS</div>
-       </div>
-       <div class="flex-1">
-         <div class="color-highlight size-h3">{{ $requests }}</div>
-         <div class="size-h6">CURRENT REQUESTS</div>
-       </div>
-       <div class="flex-1">
-         <div class="color-highlight size-h3">{{ $fails }}</div>
-         <div class="size-h6">FAILED REQUESTS</div>
-       </div>
-    </div>
 ```
 
 ## Environment Variables
