@@ -15,7 +15,8 @@ The widget is modeled after the [cloudflare tunnels widget](https://github.com/g
 </details>
 
 ```yaml
-- type: custom-api
+- type: dynawidgets
+  widget: caddy-routes
   css-class: "widget-type-caddy"
   cache: 4h
   options:
@@ -24,48 +25,6 @@ The widget is modeled after the [cloudflare tunnels widget](https://github.com/g
     local_ip: "localhost"
     docker: false
   title: Caddy Routes
-  url: http://${CADDY_ADMIN_URL}/config/apps/http/servers/${CADDY_SERVER_NAME}/routes
-  template: |
-     <style>
-      .widget-type-caddy li {
-        margin-top: var(--list-half-gap); 
-        border-top: 1px solid var(--color-separator);
-        padding-top: var(--list-half-gap);
-      }
-      </style>
-      <ul class="dynamic-columns list-gap-15 list-with-separator">
-      {{ range .JSON.Array "" }}
-        {{ $dial := .String "handle.0.routes.0.handle.0.upstreams.0.dial"}}
-        {{ $host := .String "match.0.host.0" }}
-        {{ $dial_address := "" }}
-        {{ if $.Options.BoolOr "docker" false }}
-          {{ $dial_address = $dial }}
-        {{ else }}
-          {{ $dial_address = $dial | findMatch (":.*") | concat ($.Options.StringOr "local_ip" "localhost") }}
-        {{ end }}
-        
-        <li class="flex items-center gap-20">
-            <div class="shrink-0">
-                <img class="docker-container-icon" src="{{ $.Options.StringOr "icon_url" "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/caddy.svg" }}" alt="" loading="lazy">
-            </div>
-            <div class="min-width-0 grow">
-              <a href='https://{{ $host }}' class="color-highlight size-title-dynamic block text-truncate" target="_blank" rel="noreferrer">{{ $host | trimSuffix ($.Options.StringOr "domain_name" ".example.com") }}</a>
-              <div class="flex items-center gap-10" style="margin-bottom: 5px">
-                <div class="text-left">
-                  <img src="assets/img/link-down-right.png" style="width: auto; height: 20px; margin-left: 0px; margin-top: -4px;">
-                </div>
-                <div class="size-h6 flex-1 text-left">
-                  {{ if $.Options.BoolOr "docker" false }}
-                    {{ $dial_address }}
-                  {{ else }}
-                  <a href='http://{{ $dial_address }}' target="_blank" rel="noreferrer">{{ $dial_address }}</a>
-                  {{ end }}
-                </div>
-              </div>
-            </div>
-        </li>
-      {{ end }}
-      </ul>
 ```
 
 ## Environment Variables
