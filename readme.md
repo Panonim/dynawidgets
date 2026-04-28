@@ -10,6 +10,10 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 [C](#c) | [R](#r) | [T](#t)
 
 ## C
+- [**Caddy Routes**](widgets/caddy-routes/widget.md) — External and local links to your services proxied through Caddy.
+  - Author: whysofurious
+- [**Caddy Status**](widgets/caddy-status/widget.md) — Display Caddy status (upstreams, current requests, failed requests)
+  - Author: whysofurious
 - [**Chess.com Daily Puzzle**](widgets/daily-chess-puzzle/widget.md) — Display daily chess puzzle from chess.com
   - Author: panonim
 

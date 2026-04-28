@@ -1,0 +1,16 @@
+[
+  {
+    "title": "Caddy Routes",
+    "description": "External and local links to your services proxied through Caddy.",
+    "author": "whysofurious",
+    "slug": "caddy-routes",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/caddy-routes/template.txt"
+  },
+  {
+    "title": "Caddy Status",
+    "description": "Display Caddy status (upstreams, current requests, failed requests)",
+    "author": "whysofurious",
+    "slug": "caddy-status",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/caddy-status/template.txt"
+  }
+]
