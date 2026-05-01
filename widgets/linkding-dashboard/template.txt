@@ -1,0 +1,51 @@
+{{ $tagsCount := .JSON.Int "count" }}
+{{ $limit := .Options.IntOr "limit" 10 }}
+{{ $collapseAfter := .Options.IntOr "collapse-after" 6 }}
+{{ $newTab := .Options.BoolOr "in-new-tab" false }}
+{{ $urlBookmarks := printf "%s/api/bookmarks/?limit=%d" "${LINKDING_URL}" $limit }}
+{{ $respBookmarks := newRequest $urlBookmarks
+  | withHeader "Authorization" (printf "Token %s" "${LINKDING_TOKEN}")
+  | withHeader "Accept" "application/json"
+  | getResponse }}
+{{ $bookmarksCount := $respBookmarks.JSON.Int "count" }}
+{{ $bookmarks := $respBookmarks.JSON.Array "results" }}
+
+<div class="flex justify-center gap-10 text-center" style="margin-bottom:1rem;">
+  <div>
+    <div class="color-highlight size-h3">{{ $bookmarksCount | formatNumber }}</div>
+    <div class="size-h6">BOOKMARKS</div>
+  </div>
+  <div style="width:1px; height:40px; background-color: rgba(255,255,255,0.2);"></div>
+  <div>
+    <div class="color-highlight size-h3">{{ $tagsCount | formatNumber }}</div>
+    <div class="size-h6">TAGS</div>
+  </div>
+</div>
+
+<ul class="list list-gap-20 collapsible-container" data-collapse-after="{{ $collapseAfter }}" style="max-width: 100%; padding-left: 0; margin: 0;">
+  {{ range $b := $bookmarks }}
+    {{ $title := $b.String "title" }}
+    {{ if eq $title "" }}{{ $title = $b.String "website_title" }}{{ end }}
+    {{ $url := $b.String "url" }}
+    <li style="list-style: none;">
+      <a href="{{ $url }}"
+         title="{{ $title }}"
+         {{ if $newTab }}target="_blank" rel="noopener"{{ end }}
+         class="size-h4 color-primary"
+         style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; cursor: pointer;">
+        {{ $title }}
+      </a>
+      <ul class="list-horizontal-text size-h6">
+        {{ range $tag := $b.Array "tag_names" }}
+          <li>{{ $tag.String "" }}</li>
+        {{ end }}
+      </ul>
+    </li>
+  {{ end }}
+</ul>
+
+required: |
+  url: ${LINKDING_URL}/api/tags/?limit=1
+  headers:
+    Authorization: Token ${LINKDING_TOKEN}
+    Accept: application/json
