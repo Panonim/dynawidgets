@@ -1,0 +1,147 @@
+{{ $mediaServer := .Options.StringOr "media-server" "" }}
+    {{ $baseURL := .Options.StringOr "base-url" "" }}
+    {{ $apiKey := .Options.StringOr "api-key" "" }}
+    {{ $userName := .Options.StringOr "user-name" "" }}
+
+    {{ define "errorMsg" }}
+      <div class="widget-error-header">
+        <div class="color-negative size-h3">ERROR</div>
+        <svg class="widget-error-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"></path>
+        </svg>
+      </div>
+      <p class="break-all">{{ . }}</p>
+    {{ end }}
+
+    {{ if or (eq $mediaServer "") (eq $baseURL "") (eq $apiKey "") (and (eq $mediaServer "jellyfin") (eq $userName "")) }}
+      {{ template "errorMsg" "Some required options are not set" }}
+    {{ else }}
+
+    {{ $historyLength := .Options.StringOr "history-length" "10" }}
+    {{ $mediaTypes := .Options.StringOr "media-types" "Movie,Episode,Audio" }}
+    {{ $thumbAspectRatio := .Options.StringOr "thumbnail-aspect-ratio" "portrait" }}
+    {{ $timeFormat := .Options.StringOr "time-format" "Jan 02 15:04" }}
+
+    {{ $userID := "" }}
+    {{ $usersRequestURL := concat $baseURL "/Users" }}
+    {{ $usersCall := newRequest $usersRequestURL
+      | withParameter "api_key" $apiKey
+      | withHeader "Accept" "application/json"
+      | getResponse }}
+
+    {{ $usersList := $usersCall.JSON.Array "" }}
+    {{ range $i, $user := $usersList }}
+      {{ if eq ($user.String "Name") $userName }}
+        {{ $userID = $user.String "Id" }}
+        {{ break }}
+      {{ end }}
+    {{ end }}
+
+    {{ if eq $userID "" }}
+      {{ template "errorMsg" (concat "User '" $userName "' not found.") }}
+    {{ else }}
+
+    {{ $historyRequestURL := concat $baseURL "/Users/" $userID "/Items" }}
+    {{ $historyCall := newRequest $historyRequestURL
+      | withParameter "api_key" $apiKey
+      | withParameter "Limit" $historyLength
+      | withParameter "IncludeItemTypes" $mediaTypes
+      | withParameter "Recursive" "true"
+      | withParameter "isPlayed" "true"
+      | withParameter "sortBy" "DatePlayed"
+      | withParameter "sortOrder" "Descending"
+      | withParameter "Fields" "UserDataLastPlayedDate"
+      | withHeader "Accept" "application/json"
+      | getResponse }}
+
+    {{ $history := $historyCall.JSON.Array "Items" }}
+
+    {{ if and (eq $historyCall.Response.StatusCode 200) (eq (len $history) 0) }}
+      <p>Nothing has been played. Start streaming something!</p>
+    {{ else }}
+      <div class="carousel-container show-right-cutoff">
+        <div class="cards-horizontal carousel-items-container">
+          {{ range $n, $item := $history }}
+            {{ $mediaType := $item.String "Type" }}
+            {{ $isMovie := eq $mediaType "Movie" }}
+            {{ $isShows := eq $mediaType "Episode" }}
+            {{ $isMusic := eq $mediaType "Audio" }}
+
+            {{ $title := $item.String "Name" }}
+            {{ $showTitle := "" }}
+            {{ $showSeason := "" }}
+            {{ $showEpisode := "" }}
+            {{ $artist := "" }}
+            {{ $albumTitle := "" }}
+            {{ $rating := "" }}
+            
+            {{ if $isShows }}
+              {{ $showTitle = $item.String "SeriesName" }}
+              {{ $showSeason = $item.String "ParentIndexNumber" }}
+              {{ $showEpisode = $item.String "IndexNumber" }}
+            {{ else if $isMusic }}
+              {{ $artist = $item.String "AlbumArtist" }}
+              {{ $albumTitle = $item.String "Album" }}
+            {{ else if $isMovie }}
+              {{ $rating = $item.String "OfficialRating" }}
+            {{ end }}
+
+            {{ $thumbID := $item.String "Id" }}
+            {{ if $isShows }}
+              {{ $thumbID = $item.String "SeriesId" }}
+            {{ end }}
+            {{ $thumbURL := concat $baseURL "/Items/" $thumbID "/Images/Primary?api_key=" $apiKey }}
+
+            {{ $time := $item.String "UserData.LastPlayedDate" }}
+            {{ $playedAt := $time | parseRelativeTime "rfc3339" }}
+
+            {{ $itemLink := concat $baseURL "/web/index.html#!/details?id=" ($item.String "Id") }}
+            {{ if $isShows }}
+              {{ $itemLink = concat $baseURL "/web/index.html#!/details?id=" ($item.String "SeriesId") }}
+            {{ end }}
+
+            <div class="card widget-content-frame">
+              <img src="{{ $thumbURL | safeURL }}"
+                alt="{{ $title }}"
+                loading="lazy"
+                style="
+                  object-fit: cover;
+                  border-radius: var(--border-radius) var(--border-radius) 0 0;
+                  {{ if eq $thumbAspectRatio "square" }}
+                    aspect-ratio: 1;
+                  {{ else if eq $thumbAspectRatio "portrait" }}
+                    aspect-ratio: 2/3;
+                  {{ else if eq $thumbAspectRatio "landscape" }}
+                    aspect-ratio: 16/9;
+                  {{ else }}
+                    aspect-ratio: 2/3;
+                  {{ end }}
+                "
+              />
+              <ul class="flex flex-column justify-evenly margin-bottom-10 margin-top-10 padding-inline-widget" style="height: 100%;">
+                {{ if $isShows }}
+                  <li class="text-truncate color-primary"><a href="{{ $itemLink }}" target="_blank" style="text-decoration: none;">{{ $showTitle }}</a></li>
+                  <li class="text-truncate size-sm">S{{ $showSeason }}E{{ $showEpisode }} | {{ $title }}</li>
+                {{ else if $isMusic }}
+                  <li class="text-truncate color-primary"><a href="{{ $itemLink }}" target="_blank" style="text-decoration: none;">{{ $artist }}</a></li>
+                  <li class="text-truncate size-sm">{{ $albumTitle }}</li>
+                  <li class="text-truncate size-sm">{{ $title }}</li>
+                {{ else if $isMovie }}
+                  <li class="text-truncate color-primary"><a href="{{ $itemLink }}" target="_blank" style="text-decoration: none;">{{ $title }}</a></li>
+                  <li class="text-truncate size-sm">{{ $rating }}</li>
+                {{ end }}
+                <li class="text-truncate size-sm"><span {{ $playedAt }}></span> ago</li>
+              </ul>
+            </div>
+          {{ end }}
+        </div>
+      </div>
+    {{ end }}
+    {{ end }}
+    {{ end }}
+
+required: |
+  media-server: jellyfin
+  base-url: ${JELLYFIN_URL}
+  api-key: ${JELLYFIN_TOKEN}
+  user-name: ${JELLYFIN_USER}
