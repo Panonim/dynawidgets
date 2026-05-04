@@ -1,12 +1,19 @@
 # Linkding Dashboard
 
-This widget displays number of Bookmarks, number of Tags, and the most recent bookmarks (configurable) of your [Linkding](https://linkding.link/) instance.
+This widget displays number of Bookmarks, number of Tags, and the most recent bookmarks (configurable) of your [Linkding](https://linkding.link/) instance. In `horizontal` layout it shows the most recent bookmarks only.
 
-The widget used the Glance [Karakeep Dashboard](https://github.com/glanceapp/community-widgets/tree/main/widgets/karakeep-dashboard) as base for the code, plus some style and ideas from the [Linkwarden latests](https://github.com/glanceapp/community-widgets/tree/main/widgets/linkwarden-latest-bookmarks) widget. While it should work in full columns, it looks better in small columns.
+The widget used the Glance [Karakeep Dashboard](https://github.com/glanceapp/community-widgets/tree/main/widgets/karakeep-dashboard) as base for the code, plus some style and ideas from the [Linkwarden latests](https://github.com/glanceapp/community-widgets/tree/main/widgets/linkwarden-latest-bookmarks) widget.
+
+For the horizontal layout, the widget uses the `horizontal-cards` layout available for the dynacat [rss widget](https://dynacat.artur.zone/#configuration/rss).
 
 <details>
 <summary>Small column layout</summary>
 <img src="images/linkding-small.png" width="800px" />
+<details>
+
+<details>
+<summary>Small column layout</summary>
+<img src="images/linkding-large.png" width="300px" />
 <details>
 
 ## Configuration
@@ -20,7 +27,8 @@ The widget used the Glance [Karakeep Dashboard](https://github.com/glanceapp/com
   limit: 10
   collapse-after: 5
   in-new-tab: true
-```
+  layout: vertical
+  thumbnail-height: 10
 
 ## Environment Variables
 
