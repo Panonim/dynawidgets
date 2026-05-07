@@ -66,7 +66,7 @@
           </svg>
           {{ end }}
           <div class="margin-bottom-widget padding-inline-widget flex flex-column grow min-width-0">
-              <a href="{{ $url }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" target="_blank" rel="noreferrer">{{ $title }}</a>
+              <a href="{{ $url }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" {{ if $newTab }}target="_blank" rel="noopener"{{ end }}>{{ $title }}</a>
               <ul class="list-horizontal-text flex-nowrap margin-top-7 min-width-0">
                   <li class="shrink-0" {{ $dateAdded | parseTime "rfc3339" | toRelativeTime }}></li>
                   {{ range $i, $tag := $b.Array "tag_names" }}
