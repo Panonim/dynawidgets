@@ -25,11 +25,11 @@ For the horizontal layout, the widget uses the `horizontal-cards` layout availab
   widget: linkding-dashboard
   title: Linkding Dashboard
   cache: 30m
-  method: GET
   limit: 10
-  collapse-after: 5
-  in-new-tab: true
-  layout: vertical
+  options:
+    collapse-after: 5
+    in-new-tab: true
+    layout: vertical
 ```
 
 ### Horizontal Layout
@@ -39,11 +39,11 @@ For the horizontal layout, the widget uses the `horizontal-cards` layout availab
   widget: linkding-dashboard
   title: Linkding Dashboard
   cache: 30m
-  method: GET
   limit: 10
-  in-new-tab: true
-  layout: horizontal
-  thumbnail-height: 10
+  options:
+    in-new-tab: true
+    layout: horizontal
+    thumbnail-height: 10
 ```
 
 ## Environment Variables
