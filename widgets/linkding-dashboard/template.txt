@@ -1,0 +1,89 @@
+{{ $tagsCount := .JSON.Int "count" }}
+{{ $limit := .Options.IntOr "limit" 10 }}
+{{ $collapseAfter := .Options.IntOr "collapse-after" 6 }}
+{{ $layout := .Options.StringOr "layout" "vertical"}}
+{{ $thumbnailHeight := .Options.IntOr "thumbnail-height" 10 }}
+{{ $newTab := .Options.BoolOr "in-new-tab" false }}
+{{ $urlBookmarks := printf "%s/api/bookmarks/?limit=%d" "${LINKDING_URL}" $limit }}
+{{ $respBookmarks := newRequest $urlBookmarks
+  | withHeader "Authorization" (printf "Token %s" "${LINKDING_TOKEN}")
+  | withHeader "Accept" "application/json"
+  | getResponse }}
+{{ $bookmarksCount := $respBookmarks.JSON.Int "count" }}
+{{ $bookmarks := $respBookmarks.JSON.Array "results" }}
+
+{{ if eq $layout "vertical" }}
+<div class="flex justify-center gap-10 text-center" style="margin-bottom:1rem;">
+  <div>
+    <div class="color-highlight size-h3">{{ $bookmarksCount | formatNumber }}</div>
+    <div class="size-h6">BOOKMARKS</div>
+  </div>
+  <div style="width:1px; height:40px; background-color: rgba(255,255,255,0.2);"></div>
+  <div>
+    <div class="color-highlight size-h3">{{ $tagsCount | formatNumber }}</div>
+    <div class="size-h6">TAGS</div>
+  </div>
+</div>
+
+<ul class="list list-gap-20 collapsible-container" data-collapse-after="{{ $collapseAfter }}" style="max-width: 100%; padding-left: 0; margin: 0;">
+  {{ range $b := $bookmarks }}
+    {{ $title := $b.String "title" }}
+    {{ if eq $title "" }}{{ $title = $b.String "website_title" }}{{ end }}
+    {{ $url := $b.String "url" }}
+    {{ $dateAdded := $b.String "date_added" }}
+    <li style="list-style: none;">
+      <a href="{{ $url }}"
+         title="{{ $title }}"
+         {{ if $newTab }}target="_blank" rel="noopener"{{ end }}
+         class="size-h4 color-primary"
+         style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-decoration: none; cursor: pointer;">
+        {{ $title }}
+      </a>
+      <ul class="list-horizontal-text size-h6">
+        <li {{ $dateAdded | parseTime "rfc3339" | toRelativeTime }}></li>
+        {{ range $tag := $b.Array "tag_names" }}
+          <li>{{ $tag.String "" }}</li>
+        {{ end }}
+      </ul>
+    </li>
+  {{ end }}
+</ul>
+{{ else if eq $layout "horizontal" }}
+<div class="carousel-container">
+  <div class="cards-horizontal carousel-items-container" style="--rss-thumbnail-height: {{ $thumbnailHeight }}rem;">
+      {{ range $b := $bookmarks }}
+      {{ $title := $b.String "title" }}
+      {{ if eq $title "" }}{{ $title = $b.String "website_title" }}{{ end }}
+      {{ $url := $b.String "url" }}
+      {{ $thumbURL := $b.String "preview_image_url" }}
+      {{ $dateAdded := $b.String "date_added" }}
+      <div class="card widget-content-frame thumbnail-parent">
+          {{ if ne "" $thumbURL }}
+          <img class="rss-card-image thumbnail" loading="lazy" src="{{ $thumbURL }}" alt="">
+          {{ else }}
+          <svg class="rss-card-image" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--color-text-subdue)">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+          </svg>
+          {{ end }}
+          <div class="margin-bottom-widget padding-inline-widget flex flex-column grow min-width-0">
+              <a href="{{ $url }}" class="text-truncate-3-lines color-primary-if-not-visited margin-top-10 margin-bottom-auto" {{ if $newTab }}target="_blank" rel="noopener"{{ end }}>{{ $title }}</a>
+              <ul class="list-horizontal-text flex-nowrap margin-top-7 min-width-0">
+                  <li class="shrink-0" {{ $dateAdded | parseTime "rfc3339" | toRelativeTime }}></li>
+                  {{ range $i, $tag := $b.Array "tag_names" }}
+                  {{ if ge $i 2 }}{{ break }}{{ end }}
+                    <li class="text-truncate">{{ $tag.String "" }}</li>
+                  {{ end }}
+              </ul>
+          </div>
+      </div>
+      {{ end }}
+  </div>
+</div>
+{{ end }}
+
+required: |
+  url: ${LINKDING_URL}/api/tags/?limit=1
+  method: GET
+  headers:
+    Authorization: Token ${LINKDING_TOKEN}
+    Accept: application/json
