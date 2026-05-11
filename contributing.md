@@ -2,6 +2,8 @@
 
 This repository is a community catalog of Dynacat widgets. Contributions are welcome, but they should follow the project structure and the widget-specific rules below.
 
+You can find a converter to speed up the process at -> https://widgets.artur.zone
+
 ## Governance
 
 These rules may change as the repository grows and the community evolves.
@@ -82,7 +84,7 @@ If you want to share a custom widget with the community, follow these steps:
    ```
 
 6. Add a `widget.md` in that directory with a preview of the widget, the YAML configuration, and any setup or usage notes needed to run it. Use existing widgets as a reference.
-7. Add a `preview.png` in the /images directory (optional).
+7. Add a `preview.png` in the /images directory (At least one preview image is required).
 8. Add a `meta.yml` file with:
 
 ```yaml
