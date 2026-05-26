@@ -1,0 +1,256 @@
+{{ $hideAirQuality := .Options.BoolOr "hide-air-quality" false }}
+{{ $hideForecast := .Options.BoolOr "hide-forecast" false }}
+{{ $temp := .JSON.Float "current.temperature_2m" }}
+{{ $feels := .JSON.Float "current.apparent_temperature" }}
+{{ $code := .JSON.Int "current.weather_code" }}
+{{ $isDay := .JSON.Int "current.is_day" }}
+
+{{ $icon := "❓" }}{{ $cond := "Unknown" }}
+{{ if eq $code 0 }}
+  {{ if eq $isDay 1 }}{{ $icon = "☀️" }}{{ else }}{{ $icon = "🌙" }}{{ end }}{{ $cond = "Clear" }}
+{{ else if eq $code 1 }}{{ $icon = "🌤️" }}{{ $cond = "Mainly clear" }}
+{{ else if eq $code 2 }}{{ $icon = "⛅" }}{{ $cond = "Partly cloudy" }}
+{{ else if eq $code 3 }}{{ $icon = "☁️" }}{{ $cond = "Overcast" }}
+{{ else if le $code 48 }}{{ $icon = "🌫️" }}{{ $cond = "Fog" }}
+{{ else if le $code 57 }}{{ $icon = "🌦️" }}{{ $cond = "Drizzle" }}
+{{ else if le $code 65 }}{{ $icon = "🌧️" }}{{ $cond = "Rain" }}
+{{ else if le $code 67 }}{{ $icon = "🌧️" }}{{ $cond = "Freezing rain" }}
+{{ else if le $code 77 }}{{ $icon = "🌨️" }}{{ $cond = "Snow" }}
+{{ else if le $code 82 }}{{ $icon = "🌧️" }}{{ $cond = "Showers" }}
+{{ else if le $code 86 }}{{ $icon = "🌨️" }}{{ $cond = "Snow showers" }}
+{{ else }}{{ $icon = "⛈️" }}{{ $cond = "Thunderstorm" }}{{ end }}
+
+{{ $aqi := -1 }}{{ $uvi := -1 }}
+{{ $pm25 := -1.0 }}{{ $pm10 := -1.0 }}{{ $no2 := -1.0 }}{{ $o3 := -1.0 }}{{ $so2 := -1.0 }}
+{{ if not $hideAirQuality }}
+  {{ $air := .Subrequest "air" }}
+  {{ if eq $air.Response.StatusCode 200 }}
+    {{ $aqi = $air.JSON.Int "current.european_aqi" }}
+    {{ $uvi = $air.JSON.Int "current.uv_index" }}
+    {{ $pm25 = $air.JSON.Float "current.pm2_5" }}
+    {{ $pm10 = $air.JSON.Float "current.pm10" }}
+    {{ $no2 = $air.JSON.Float "current.nitrogen_dioxide" }}
+    {{ $o3 = $air.JSON.Float "current.ozone" }}
+    {{ $so2 = $air.JSON.Float "current.sulphur_dioxide" }}
+  {{ end }}
+{{ end }}
+
+{{ $aqiClass := "color-subdue" }}{{ $aqiLabel := "Unavailable" }}
+{{ if ge $aqi 0 }}
+  {{ if le $aqi 20 }}{{ $aqiClass = "color-positive" }}{{ $aqiLabel = "Good" }}
+  {{ else if le $aqi 40 }}{{ $aqiClass = "color-positive" }}{{ $aqiLabel = "Fair" }}
+  {{ else if le $aqi 60 }}{{ $aqiClass = "color-highlight" }}{{ $aqiLabel = "Moderate" }}
+  {{ else if le $aqi 80 }}{{ $aqiClass = "color-negative" }}{{ $aqiLabel = "Poor" }}
+  {{ else if le $aqi 100 }}{{ $aqiClass = "color-negative" }}{{ $aqiLabel = "Very Poor" }}
+  {{ else }}{{ $aqiClass = "color-negative" }}{{ $aqiLabel = "Extremely Poor" }}{{ end }}
+{{ end }}
+
+{{ $uvClass := "color-subdue" }}{{ $uvLabel := "Unavailable" }}
+{{ if ge $uvi 0 }}
+  {{ if le $uvi 2 }}{{ $uvClass = "color-positive" }}{{ $uvLabel = "Low" }}
+  {{ else if le $uvi 5 }}{{ $uvClass = "color-highlight" }}{{ $uvLabel = "Moderate" }}
+  {{ else if le $uvi 7 }}{{ $uvClass = "color-negative" }}{{ $uvLabel = "High" }}
+  {{ else if le $uvi 10 }}{{ $uvClass = "color-negative" }}{{ $uvLabel = "Very High" }}
+  {{ else }}{{ $uvClass = "color-negative" }}{{ $uvLabel = "Extreme" }}{{ end }}
+{{ end }}
+
+{{ $pm25Class := "color-subdue" }}{{ $pm25Label := "Unavailable" }}
+{{ if ge $pm25 0.0 }}
+  {{ if le $pm25 10.0 }}{{ $pm25Class = "color-positive" }}{{ $pm25Label = "Good" }}
+  {{ else if le $pm25 20.0 }}{{ $pm25Class = "color-positive" }}{{ $pm25Label = "Fair" }}
+  {{ else if le $pm25 25.0 }}{{ $pm25Class = "color-highlight" }}{{ $pm25Label = "Moderate" }}
+  {{ else if le $pm25 50.0 }}{{ $pm25Class = "color-negative" }}{{ $pm25Label = "Poor" }}
+  {{ else if le $pm25 75.0 }}{{ $pm25Class = "color-negative" }}{{ $pm25Label = "Very Poor" }}
+  {{ else }}{{ $pm25Class = "color-negative" }}{{ $pm25Label = "Extremely Poor" }}{{ end }}
+{{ end }}
+
+{{ $pm10Class := "color-subdue" }}{{ $pm10Label := "Unavailable" }}
+{{ if ge $pm10 0.0 }}
+  {{ if le $pm10 20.0 }}{{ $pm10Class = "color-positive" }}{{ $pm10Label = "Good" }}
+  {{ else if le $pm10 40.0 }}{{ $pm10Class = "color-positive" }}{{ $pm10Label = "Fair" }}
+  {{ else if le $pm10 50.0 }}{{ $pm10Class = "color-highlight" }}{{ $pm10Label = "Moderate" }}
+  {{ else if le $pm10 100.0 }}{{ $pm10Class = "color-negative" }}{{ $pm10Label = "Poor" }}
+  {{ else if le $pm10 150.0 }}{{ $pm10Class = "color-negative" }}{{ $pm10Label = "Very Poor" }}
+  {{ else }}{{ $pm10Class = "color-negative" }}{{ $pm10Label = "Extremely Poor" }}{{ end }}
+{{ end }}
+
+{{ $no2Class := "color-subdue" }}{{ $no2Label := "Unavailable" }}
+{{ if ge $no2 0.0 }}
+  {{ if le $no2 40.0 }}{{ $no2Class = "color-positive" }}{{ $no2Label = "Good" }}
+  {{ else if le $no2 90.0 }}{{ $no2Class = "color-positive" }}{{ $no2Label = "Fair" }}
+  {{ else if le $no2 120.0 }}{{ $no2Class = "color-highlight" }}{{ $no2Label = "Moderate" }}
+  {{ else if le $no2 230.0 }}{{ $no2Class = "color-negative" }}{{ $no2Label = "Poor" }}
+  {{ else if le $no2 340.0 }}{{ $no2Class = "color-negative" }}{{ $no2Label = "Very Poor" }}
+  {{ else }}{{ $no2Class = "color-negative" }}{{ $no2Label = "Extremely Poor" }}{{ end }}
+{{ end }}
+
+{{ $o3Class := "color-subdue" }}{{ $o3Label := "Unavailable" }}
+{{ if ge $o3 0.0 }}
+  {{ if le $o3 50.0 }}{{ $o3Class = "color-positive" }}{{ $o3Label = "Good" }}
+  {{ else if le $o3 100.0 }}{{ $o3Class = "color-positive" }}{{ $o3Label = "Fair" }}
+  {{ else if le $o3 130.0 }}{{ $o3Class = "color-highlight" }}{{ $o3Label = "Moderate" }}
+  {{ else if le $o3 240.0 }}{{ $o3Class = "color-negative" }}{{ $o3Label = "Poor" }}
+  {{ else if le $o3 380.0 }}{{ $o3Class = "color-negative" }}{{ $o3Label = "Very Poor" }}
+  {{ else }}{{ $o3Class = "color-negative" }}{{ $o3Label = "Extremely Poor" }}{{ end }}
+{{ end }}
+
+{{ $so2Class := "color-subdue" }}{{ $so2Label := "Unavailable" }}
+{{ if ge $so2 0.0 }}
+  {{ if le $so2 100.0 }}{{ $so2Class = "color-positive" }}{{ $so2Label = "Good" }}
+  {{ else if le $so2 200.0 }}{{ $so2Class = "color-positive" }}{{ $so2Label = "Fair" }}
+  {{ else if le $so2 350.0 }}{{ $so2Class = "color-highlight" }}{{ $so2Label = "Moderate" }}
+  {{ else if le $so2 500.0 }}{{ $so2Class = "color-negative" }}{{ $so2Label = "Poor" }}
+  {{ else if le $so2 750.0 }}{{ $so2Class = "color-negative" }}{{ $so2Label = "Very Poor" }}
+  {{ else }}{{ $so2Class = "color-negative" }}{{ $so2Label = "Extremely Poor" }}{{ end }}
+{{ end }}
+
+{{ $aqiValue := "-" }}{{ if ge $aqi 0 }}{{ $aqiValue = printf "%d" $aqi }}{{ end }}
+{{ $uvValue := "-" }}{{ if ge $uvi 0 }}{{ $uvValue = printf "%d" $uvi }}{{ end }}
+{{ $pm25Value := "-" }}{{ if ge $pm25 0.0 }}{{ $pm25Value = printf "%.1f" $pm25 }}{{ end }}
+{{ $pm10Value := "-" }}{{ if ge $pm10 0.0 }}{{ $pm10Value = printf "%.1f" $pm10 }}{{ end }}
+{{ $no2Value := "-" }}{{ if ge $no2 0.0 }}{{ $no2Value = printf "%.1f" $no2 }}{{ end }}
+{{ $o3Value := "-" }}{{ if ge $o3 0.0 }}{{ $o3Value = printf "%.1f" $o3 }}{{ end }}
+{{ $so2Value := "-" }}{{ if ge $so2 0.0 }}{{ $so2Value = printf "%.1f" $so2 }}{{ end }}
+
+<div{{ if not $hideForecast }} data-popover-type="html" data-popover-position="below" data-popover-max-width="520px" data-popover-text-align="left"{{ end }} style="{{ if not $hideForecast }}cursor: help;{{ end }}">
+  <div class="flex" style="gap: 1rem; align-items: flex-start;">
+    <div class="flex items-center" style="gap: 1rem; min-width: 0;">
+      <div style="font-size: 3.2em; line-height: 1;">{{ $icon }}</div>
+      <div style="flex: 1; min-width: 0;">
+        <div class="size-h1 color-highlight">{{ printf "%.0f" $temp }}°</div>
+        <div class="size-h6 color-subdue">Feels {{ printf "%.0f" $feels }}° · {{ $cond }}</div>
+      </div>
+    </div>
+  </div>
+
+  {{ if not $hideForecast }}
+  <div data-popover-html>
+    <div class="size-h4 color-highlight margin-bottom-10">3-day forecast</div>
+    {{ $currentHour := .JSON.String "current.time" | findSubmatch "T([0-9]{2})" }}
+    {{ range $i, $_ := .JSON.Array "hourly.time" }}
+      {{ if and (lt $i 72) (eq (mod $i 6) 3) }}
+        {{ if eq (mod $i 24) 3 }}
+          <div class="margin-top-10">
+            <div class="size-h5 color-highlight margin-bottom-5">{{ if eq $i 3 }}Today{{ else if eq $i 27 }}Tomorrow{{ else }}+2 days{{ end }}</div>
+            <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.7rem;">
+        {{ end }}
+
+        {{ $slotHour := mod $i 24 }}
+        {{ $slotTime := "00-06" }}
+        {{ if eq $slotHour 9 }}{{ $slotTime = "06-12" }}{{ else if eq $slotHour 15 }}{{ $slotTime = "12-18" }}{{ else if eq $slotHour 21 }}{{ $slotTime = "18-24" }}{{ end }}
+        {{ $isCurrentSlot := false }}
+        {{ if and (ne $currentHour "") (lt $i 24) (lt $currentHour "06") (eq $slotHour 3) }}{{ $isCurrentSlot = true }}{{ end }}
+        {{ if and (ne $currentHour "") (lt $i 24) (ge $currentHour "06") (lt $currentHour "12") (eq $slotHour 9) }}{{ $isCurrentSlot = true }}{{ end }}
+        {{ if and (ne $currentHour "") (lt $i 24) (ge $currentHour "12") (lt $currentHour "18") (eq $slotHour 15) }}{{ $isCurrentSlot = true }}{{ end }}
+        {{ if and (ne $currentHour "") (lt $i 24) (ge $currentHour "18") (eq $slotHour 21) }}{{ $isCurrentSlot = true }}{{ end }}
+        {{ $isPastSlot := false }}
+        {{ if and (ne $currentHour "") (lt $i 24) (ge $currentHour "06") (eq $slotHour 3) }}{{ $isPastSlot = true }}{{ end }}
+        {{ if and (ne $currentHour "") (lt $i 24) (ge $currentHour "12") (eq $slotHour 9) }}{{ $isPastSlot = true }}{{ end }}
+        {{ if and (ne $currentHour "") (lt $i 24) (ge $currentHour "18") (eq $slotHour 15) }}{{ $isPastSlot = true }}{{ end }}
+        {{ $slotTemp := $.JSON.Float (printf "hourly.temperature_2m.%d" $i) }}
+        {{ $slotPrecip := $.JSON.Int (printf "hourly.precipitation_probability.%d" $i) }}
+        {{ $slotCode := $.JSON.Int (printf "hourly.weather_code.%d" $i) }}
+        {{ $slotIsDay := $.JSON.Int (printf "hourly.is_day.%d" $i) }}
+        {{ $slotIcon := "❓" }}{{ $slotCond := "Unknown" }}
+        {{ if eq $slotCode 0 }}
+          {{ if eq $slotIsDay 1 }}{{ $slotIcon = "☀️" }}{{ else }}{{ $slotIcon = "🌙" }}{{ end }}{{ $slotCond = "Clear" }}
+        {{ else if eq $slotCode 1 }}{{ $slotIcon = "🌤️" }}{{ $slotCond = "Mainly clear" }}
+        {{ else if eq $slotCode 2 }}{{ $slotIcon = "⛅" }}{{ $slotCond = "Partly cloudy" }}
+        {{ else if eq $slotCode 3 }}{{ $slotIcon = "☁️" }}{{ $slotCond = "Overcast" }}
+        {{ else if le $slotCode 48 }}{{ $slotIcon = "🌫️" }}{{ $slotCond = "Fog" }}
+        {{ else if le $slotCode 57 }}{{ $slotIcon = "🌦️" }}{{ $slotCond = "Drizzle" }}
+        {{ else if le $slotCode 65 }}{{ $slotIcon = "🌧️" }}{{ $slotCond = "Rain" }}
+        {{ else if le $slotCode 67 }}{{ $slotIcon = "🌧️" }}{{ $slotCond = "Freezing rain" }}
+        {{ else if le $slotCode 77 }}{{ $slotIcon = "🌨️" }}{{ $slotCond = "Snow" }}
+        {{ else if le $slotCode 82 }}{{ $slotIcon = "🌧️" }}{{ $slotCond = "Showers" }}
+        {{ else if le $slotCode 86 }}{{ $slotIcon = "🌨️" }}{{ $slotCond = "Snow showers" }}
+        {{ else }}{{ $slotIcon = "⛈️" }}{{ $slotCond = "Thunderstorm" }}{{ end }}
+
+        <div style="min-width: 0; padding: 0.55rem 0.6rem; border: 1px solid {{ if $isCurrentSlot }}color-mix(in srgb, var(--color-primary) 55%, var(--color-widget-content-border)){{ else }}var(--color-widget-content-border){{ end }}; border-radius: 6px; text-align: center; {{ if $isCurrentSlot }}background: color-mix(in srgb, var(--color-primary) 6%, transparent);{{ end }}{{ if $isPastSlot }}opacity: 0.68;{{ end }}">
+          <div class="size-h6 color-subdue">{{ $slotTime }}</div>
+          <div style="font-size: 1.35em; line-height: 1.1;">{{ $slotIcon }}</div>
+          <div class="size-h4 color-highlight">{{ printf "%.0f" $slotTemp }}°</div>
+          <div class="size-h6 color-subdue" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ $slotCond }}</div>
+          <div class="size-h6 color-subdue">{{ $slotPrecip }}% rain</div>
+        </div>
+
+        {{ if eq $slotHour 21 }}
+            </div>
+          </div>
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  </div>
+  {{ end }}
+</div>
+
+{{ if not $hideAirQuality }}
+<div class="margin-block-15" style="border-top: 1px solid; opacity: 0.15;"></div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: center;">
+  <div style="cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h2 {{ $aqiClass }}">{{ $aqiValue }}</div>
+    <div class="size-h6 color-subdue">AQI · {{ $aqiLabel }}</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">AQI · {{ $aqiValue }} · {{ $aqiLabel }}</div>
+      <div class="margin-top-5 color-subdue">European Air Quality Index; lower is cleaner. 0–20 Good, 100+ Extremely Poor.</div>
+    </div>
+  </div>
+  <div style="cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h2 {{ $uvClass }}">{{ $uvValue }}</div>
+    <div class="size-h6 color-subdue">UV · {{ $uvLabel }}</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">UV · {{ $uvValue }} · {{ $uvLabel }}</div>
+      <div class="margin-top-5 color-subdue">Sun exposure risk. 0–2 Low, 6–7 High, 11+ Extreme.</div>
+    </div>
+  </div>
+</div>
+
+<div class="margin-block-15" style="border-top: 1px solid; opacity: 0.15;"></div>
+
+<div style="display: flex; gap: 4px; text-align: center;">
+  <div style="flex: 1; cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h4 {{ $pm25Class }}">{{ $pm25Value }}</div>
+    <div class="size-h6 color-subdue">PM2.5</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">PM2.5 · {{ $pm25Value }} · {{ $pm25Label }}</div>
+      <div class="margin-top-5 color-subdue">Fine particles ≤2.5µm from combustion smoke and soot; reaches deep into lungs.</div>
+    </div>
+  </div>
+  <div style="flex: 1; cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h4 {{ $pm10Class }}">{{ $pm10Value }}</div>
+    <div class="size-h6 color-subdue">PM10</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">PM10 · {{ $pm10Value }} · {{ $pm10Label }}</div>
+      <div class="margin-top-5 color-subdue">Coarse particles ≤10µm, mostly dust, pollen, and mold spores.</div>
+    </div>
+  </div>
+  <div style="flex: 1; cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h4 {{ $no2Class }}">{{ $no2Value }}</div>
+    <div class="size-h6 color-subdue">NO₂</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">NO₂ · {{ $no2Value }} · {{ $no2Label }}</div>
+      <div class="margin-top-5 color-subdue">Nitrogen dioxide from vehicle exhaust and combustion; irritates lungs.</div>
+    </div>
+  </div>
+  <div style="flex: 1; cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h4 {{ $o3Class }}">{{ $o3Value }}</div>
+    <div class="size-h6 color-subdue">O₃</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">O₃ · {{ $o3Value }} · {{ $o3Label }}</div>
+      <div class="margin-top-5 color-subdue">Ground-level ozone from smog; can make breathing harder on hot days.</div>
+    </div>
+  </div>
+  <div style="flex: 1; cursor: help;" data-popover-type="html" data-popover-position="below" data-popover-max-width="280px" data-popover-text-align="left">
+    <div class="size-h4 {{ $so2Class }}">{{ $so2Value }}</div>
+    <div class="size-h6 color-subdue">SO₂</div>
+    <div data-popover-html>
+      <div class="size-h5 color-highlight">SO₂ · {{ $so2Value }} · {{ $so2Label }}</div>
+      <div class="margin-top-5 color-subdue">Sulfur dioxide from fossil fuel burning; common asthma trigger.</div>
+    </div>
+  </div>
+</div>
+{{ end }}
+
+required: |
+  url: https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LATITUDE}&longitude=${WEATHER_LONGITUDE}&current=temperature_2m,apparent_temperature,weather_code,is_day&hourly=temperature_2m,precipitation_probability,weather_code,is_day&forecast_days=3&timezone=auto
