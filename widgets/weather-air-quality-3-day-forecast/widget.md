@@ -24,10 +24,6 @@ Metric hover details with the measured value, status label, and a short explanat
   title: Weather & Air
   cache: 10m
   update-interval: 15m
-  url: https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LATITUDE}&longitude=${WEATHER_LONGITUDE}&current=temperature_2m,apparent_temperature,weather_code,is_day&hourly=temperature_2m,precipitation_probability,weather_code,is_day&forecast_days=3&timezone=auto
-  subrequests:
-    air:
-      url: https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${WEATHER_LATITUDE}&longitude=${WEATHER_LONGITUDE}&current=european_aqi,uv_index,pm2_5,pm10,nitrogen_dioxide,ozone,sulphur_dioxide
 ```
 
 Optional settings can be hardcoded or driven by environment variables:
