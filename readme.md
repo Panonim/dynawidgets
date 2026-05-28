@@ -34,4 +34,6 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 ## W
 - [**WakaTime**](widgets/wakatime/widget.md) — Widget that pulls from the WakaTime API and displays your coding metrics.
   - Author: jshields-ca
+- [**Weather with Air Quality and 3-days forecast**](widgets/weather-air-quality-3-day-forecast/widget.md) — Yet another weather widget with air quality and a 3-day forecast.
+  - Author: Mayurifag
 <!-- AUTO-GENERATED:END -->

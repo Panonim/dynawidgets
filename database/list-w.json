@@ -5,5 +5,12 @@
     "author": "jshields-ca",
     "slug": "wakatime",
     "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/wakatime/template.txt"
+  },
+  {
+    "title": "Weather with Air Quality and 3-days forecast",
+    "description": "Yet another weather widget with air quality and a 3-day forecast.",
+    "author": "Mayurifag",
+    "slug": "weather-air-quality-3-day-forecast",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/weather-air-quality-3-day-forecast/template.txt"
   }
 ]
