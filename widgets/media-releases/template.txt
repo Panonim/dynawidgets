@@ -1,0 +1,144 @@
+{{ $intervalH := .Options.IntOr "interval" 30 | mul 24 }}
+{{ $radarrUrl := .Options.StringOr "radarr-url" "" }}
+{{ $sonarrUrl := .Options.StringOr "sonarr-url" "" }}
+{{ $radarrKey := .Options.StringOr "radarr-key" "" }}
+{{ $sonarrKey := .Options.StringOr "sonarr-key" "" }}
+{{ $excludePhysical := .Options.BoolOr "exclude-physical" false }}
+ 
+{{ $now := now | formatTime "2006-01-02T15:04:05" }}
+{{ $endDate := offsetNow (printf "+%dh" $intervalH) | formatTime "2006-01-02T15:04:05" }}
+ 
+{{ $radarrReq := printf "%s/api/v3/calendar?start=%s&end=%s" $radarrUrl $now $endDate }}
+{{ $sonarrReq := printf "%s/api/v3/calendar?includeSeries=true&start=%s&end=%s" $sonarrUrl $now $endDate }}
+ 
+{{ $radarrData := newRequest $radarrReq
+  | withHeader "Accept" "application/json"
+  | withHeader "X-Api-Key" $radarrKey
+  | getResponse }}
+ 
+{{ $sonarrData := newRequest $sonarrReq
+  | withHeader "Accept" "application/json"
+  | withHeader "X-Api-Key" $sonarrKey
+  | getResponse }}
+ 
+{{ if and (eq $radarrData.Response.StatusCode 200) (eq $sonarrData.Response.StatusCode 200) }}
+<div class="carousel-container show-right-cutoff">
+  <div class="cards-horizontal carousel-items-container">
+ 
+    {{/* Display movies */}}
+    {{ range $radarrData.JSON.Array "" | sortByTime "releaseDate" "rfc3339" "asc" }}
+      {{ $title := .String "title" }}
+      {{ $id := .Int "id" }}
+      {{ $titleSlug := .String "titleSlug" }}
+      {{ $coverUrl := printf "%s/api/v3/mediacover/%d/poster-500.jpg?apikey=%s" $radarrUrl $id $radarrKey }}
+      {{ $link := printf "%s/movie/%s" $radarrUrl $titleSlug }}
+ 
+      {{ $releaseDate := .String "releaseDate" }}
+      {{ $releaseType := "Release" }}
+      {{ $selectedDate := $releaseDate }}
+ 
+      {{ $inCinemas := "" }}
+      {{ if .Exists "inCinemas" }}
+        {{ $inCinemas = .String "inCinemas" }}
+      {{ end }}
+ 
+      {{ $digitalRelease := "" }}
+      {{ if .Exists "digitalRelease" }}
+        {{ $digitalRelease = .String "digitalRelease" }}
+      {{ end }}
+ 
+      {{ $physicalRelease := "" }}
+      {{ if .Exists "physicalRelease" }}
+        {{ $physicalRelease = .String "physicalRelease" }}
+      {{ end }}
+ 
+      {{ if and (ne $physicalRelease "") (gt $physicalRelease $now) }}
+        {{ $releaseType = "Physical" }}
+        {{ $selectedDate = $physicalRelease }}
+      {{ end }}
+ 
+      {{ if and (ne $digitalRelease "") (gt $digitalRelease $now) }}
+        {{ if or (eq $selectedDate $releaseDate) (lt $digitalRelease $selectedDate) }}
+          {{ $releaseType = "Digital" }}
+          {{ $selectedDate = $digitalRelease }}
+        {{ end }}
+      {{ end }}
+ 
+      {{ if and (ne $inCinemas "") (gt $inCinemas $now) }}
+        {{ if or (eq $selectedDate $releaseDate) (lt $inCinemas $selectedDate) }}
+          {{ $releaseType = "In Cinemas" }}
+          {{ $selectedDate = $inCinemas }}
+        {{ end }}
+      {{ end }}
+ 
+      {{ $dateStr := $selectedDate | parseTime "RFC3339" | formatTime "Mon, 2-Jan" }}
+      {{ if or (not $excludePhysical) (ne $releaseType "Physical") }}
+        <div class="card widget-content-frame">
+          <img src="{{ $coverUrl }}"
+            alt="{{ $title }}"
+            loading="lazy"
+            style="object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; aspect-ratio: 2/3;"
+          />
+          <ul class="flex flex-column justify-evenly margin-bottom-10 margin-top-10 padding-inline-widget" style="height: 100%;">
+            <li class="text-truncate color-primary"><a href="{{ $link }}" target="_blank" style="text-decoration: none;">{{ $title }}</a></li>
+            <li class="text-truncate size-sm">{{ $releaseType }}</li>
+            <li class="text-truncate size-sm">{{ $dateStr }}</li>
+          </ul>
+        </div>
+      {{ end }}
+    {{ end }}
+ 
+    {{/* Display series episodes */}}
+    {{ range $sonarrData.JSON.Array "" | sortByTime "airDateUtc" "rfc3339" "asc" }}
+      {{ $seriesId := .Int "seriesId" }}
+      {{ $coverUrl := printf "%s/api/v3/mediacover/%d/poster-500.jpg?apikey=%s" $sonarrUrl $seriesId $sonarrKey }}
+ 
+      {{ $title := "" }}
+      {{ if .Exists "series.title" }}
+        {{ $title = .String "series.title" }}
+      {{ end }}
+ 
+      {{ $titleSlug := "" }}
+      {{ if .Exists "series.titleSlug" }}
+        {{ $titleSlug = .String "series.titleSlug" }}
+      {{ end }}
+ 
+      {{ $link := printf "%s/series/%s" $sonarrUrl $titleSlug }}
+      {{ $date := .String "airDateUtc" | parseTime "RFC3339" }}
+      {{ $seString := printf "S%02dE%02d" (.Int "seasonNumber") (.Int "episodeNumber") }}
+      {{ $episodeTitle := .String "title" }}
+      {{ $dateStr := $date.Format "Mon, 2-Jan 15:04" }}
+ 
+      <div class="card widget-content-frame">
+        <img src="{{ $coverUrl }}"
+          alt="{{ $title }}"
+          loading="lazy"
+          style="object-fit: cover; border-radius: var(--border-radius) var(--border-radius) 0 0; aspect-ratio: 2/3;"
+        />
+        <ul class="flex flex-column justify-evenly margin-bottom-10 margin-top-10 padding-inline-widget" style="height: 100%;">
+          <li class="text-truncate color-primary"><a href="{{ $link }}" target="_blank" style="text-decoration: none;">{{ $title }}</a></li>
+          <li class="text-truncate size-sm">{{ $seString }} | {{ $episodeTitle }}</li>
+          <li class="text-truncate size-sm">{{ $dateStr }}</li>
+        </ul>
+      </div>
+    {{ end }}
+ 
+  </div>
+</div>
+{{ else }}
+<div class="widget-error widget-content">
+  <div class="widget-error-header">
+    <div class="color-negative size-h3">ERROR</div>
+    <svg class="widget-error-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"></path>
+    </svg>
+  </div>
+  <p class="size-sm">Failed to fetch data.</p>
+</div>
+{{ end }}
+ 
+required: |
+  radarr-url: ${RADARR_URL}
+  radarr-key: ${RADARR_KEY}
+  sonarr-url: ${SONARR_URL}
+  sonarr-key: ${SONARR_KEY}
