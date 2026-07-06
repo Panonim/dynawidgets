@@ -7,7 +7,11 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 # --- WIDGETS LIST ---
 <!-- AUTO-GENERATED:START -->
 ## Search
-[C](#c) | [L](#l) | [R](#r) | [T](#t) | [U](#u) | [W](#w)
+[B](#b) | [C](#c) | [L](#l) | [R](#r) | [T](#t) | [U](#u) | [W](#w)
+
+## B
+- [**Beszel Container Monitor**](widgets/beszel-container-monitor/widget.md) — Displays resource usage (CPU, memory, network), uptime, and health indicators for Docker containers via the Beszel API.
+  - Author: DenushanGithub
 
 ## C
 - [**Caddy Routes**](widgets/caddy-routes/widget.md) — External and local links to your services proxied through Caddy.
