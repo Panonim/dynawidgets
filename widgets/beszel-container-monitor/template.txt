@@ -1,4 +1,4 @@
-{{ $containers := (.Subrequest "beszel").JSON.Array "items" }}
+{{ $containers := .JSON.Array "items" }}
 
 {{ if gt (len $containers) 0 }}
 <div style="max-height:360px; overflow:auto; border-radius:6px;">
@@ -15,10 +15,8 @@
       </tr>
     </thead>
     <tbody>
-      {{ $i := 0 }}
-      {{ range $containers }}
-      {{ $i = add $i 1 }}
-      {{ $isEven := eq (mod $i 2) 0 }}
+      {{ range $index, $container := $containers }}
+      {{ $isEven := eq (mod $index 2) 0 }}
 
       {{ $cpuPercent  := .Float "cpu" }}
       {{ $memoryMB    := .Float "memory" }}
@@ -34,24 +32,30 @@
 
       <tr style="border-bottom: 1px solid color-mix(in srgb, currentColor 4%, transparent); {{ if $isEven }}background: color-mix(in srgb, currentColor 3%, transparent);{{ end }}">
         <td style="white-space: nowrap; padding: 6px; text-align: left; padding-left: 0; color: var(--color-text-base); font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis;">{{ .String "name" }}</td>
+        
         <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $cpuIsHigh }}var(--color-negative){{ else }}var(--color-text-base){{ end }};">
           {{- printf "%.2f" $cpuPercent }}%
         </td>
+        
         <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $memoryIsHigh }}var(--color-negative){{ else }}var(--color-text-base){{ end }};">
           {{- if $memoryIsHigh }}{{ printf "%.2f" (div $memoryMB 1024.0) }} GB
           {{- else }}{{ printf "%.0f" $memoryMB }} MB{{ end }}
         </td>
-        <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $networkIsMB }}var(--color-negative){{ else if $networkIsKB }}var(--color-text-base){{ else }}var(--color-text-base){{ end }};">
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $networkIsMB }}var(--color-negative){{ else }}var(--color-text-base){{ end }};">
           {{- if $networkIsMB }}{{ printf "%.1f" (div $networkBps 1048576.0) }} MB/s
           {{- else if $networkIsKB }}{{ printf "%.1f" (div $networkBps 1024.0) }} KB/s
           {{- else }}{{ printf "%.0f" $networkBps }} B/s{{ end }}
         </td>
+        
         <td style="white-space: nowrap; padding: 6px; text-align: center;">
-          {{- if $isHealthy }}<span style="color: var(--color-positive);" title="Healthy">●</span>
-          {{- else if $isUnhealthy }}<span style="color: var(--color-negative);" title="Unhealthy">●</span>
-          {{- else }}<span class="color-subdue" title="No healthcheck">—</span>{{ end }}
+          {{- if $isHealthy }}<span style="color: var(--color-positive);" title="Healthy" aria-label="Healthy">●</span>
+          {{- else if $isUnhealthy }}<span style="color: var(--color-negative);" title="Unhealthy" aria-label="Unhealthy">●</span>
+          {{- else }}<span class="color-subdue" title="No healthcheck" aria-label="No healthcheck">—</span>{{ end }}
         </td>
+        
         <td style="white-space: nowrap; padding: 6px; text-align: left; color: var(--color-text-subdue); max-width: 130px; overflow: hidden; text-overflow: ellipsis;">{{ .String "image" }}</td>
+        
         <td style="white-space: nowrap; padding: 6px; text-align: left; padding-right: 0; color: var(--color-text-subdue);">{{ .String "status" }}</td>
       </tr>
       {{ end }}
@@ -62,9 +66,8 @@
 <p class="color-subdue">No containers found.</p>
 {{ end }}
 
+
 required: |
-  subrequests:
-    beszel:
-      url: "${BESZEL_URL}/api/collections/containers/records?sort=name&fields=name,cpu,memory,net,health,image,status"
-      headers:
-        Authorization: "Bearer ${BESZEL_API_TOKEN}"
+  url: ${BESZEL_URL}/api/collections/containers/records?sort=name&fields=name,cpu,memory,net,health,image,status
+  headers:
+    Authorization: Bearer ${BESZEL_API_TOKEN}

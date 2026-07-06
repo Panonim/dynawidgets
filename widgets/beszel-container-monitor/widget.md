@@ -6,28 +6,52 @@ This widget provides an overview of your Docker containers' resource usage, upti
 
 ![Beszel Containers Widget Preview](images/preview.png)
 
-## Configuration
+## Setup
+
+### 1. Add the Widget
+
+Add the widget configuration to your dashboard:
 
 ```yaml
 - type: dynawidgets
   widget: beszel-container-monitor
   title: Docker Container Status
-  url: "${BESZEL_URL}"  
-  api-token: "${BESZEL_API_TOKEN}" 
   update-interval: 60s
 ```
 
-## Options
+### 2. Configure Environment Variables
 
-| Option       | Required | Description                                     | 
-| ------------ | -------- | ----------------------------------------------- |
-| `url`   | Yes      | URL of your Beszel instance. For example, `http://192.168.1.XX:8090`                   |
-| `api-token`  | Yes      | Your Beszel token used for authentication.      |
+Configure the following environment variables where Dynacat runs.
 
-<details>
-<summary>How to Get Your Beszel API Token</summary>
+| Variable | Required | Description |
+| --- | --- | --- |
+| `BESZEL_URL` | **Yes** | URL of your Beszel instance (e.g., `http://192.168.1.XX:8090`). |
+| `BESZEL_API_TOKEN` | **Yes** | Your Beszel authentication token (see instructions below). |
+
+#### Deployment Examples
+
+**.env file (Local installs):**
+```env
+BESZEL_URL=http://192.168.1.XX:8090
+BESZEL_API_TOKEN=your_token_here
+```
+
+**Docker Compose:**
+```yaml
+environment:
+  - BESZEL_URL=http://192.168.1.XX:8090
+  - BESZEL_API_TOKEN=your_token_here
+```
+
+**Shell:**
+```bash
+export BESZEL_URL=http://192.168.1.XX:8090
+export BESZEL_API_TOKEN=your_token_here
+```
 
 ---
+
+## How to Get Your Beszel API Token
 
 Because Beszel uses PocketBase as its backend, you must generate a long-lived impersonation token from the admin panel to use as an API token.
 
@@ -43,4 +67,4 @@ Because Beszel uses PocketBase as its backend, you must generate a long-lived im
 5. **Set Token Duration:** Set the token expiration duration. To ensure your API connection remains valid long-term, use a high value like `315360000` seconds (equivalent to 10 years).
 6. **Copy and Deploy the Token:** Generate and copy the resulting token string, then paste it into your environment variables as `BESZEL_API_TOKEN`.
 
-</details>
+---
