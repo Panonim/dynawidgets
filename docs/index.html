@@ -213,6 +213,23 @@
       stroke-width: 1.8;
     }
 
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-faint);
+      transition: color 0.15s ease;
+    }
+
+    .github-link:hover {
+      color: var(--text-muted);
+    }
+
+    .github-link svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
     /* Scrollbar styling */
     * {
       scrollbar-width: thin;
@@ -290,13 +307,18 @@
           <input id="author" type="text" value="your-github-username" />
         </div>
 
-        <button class="download-button" onclick="downloadZip()">
-          <svg viewBox="0 0 24 24">
-            <path d="M12 3V16M12 16L16 12M12 16L8 12" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 20H20" stroke-linecap="round"/>
-          </svg>
-          Download ZIP
-        </button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="download-button" onclick="downloadZip()">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 3V16M12 16L16 12M12 16L8 12" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 20H20" stroke-linecap="round"/>
+            </svg>
+            Download ZIP
+          </button>
+          <a class="github-link" href="https://github.com/Panonim/dynawidgets" target="_blank" rel="noopener noreferrer" aria-label="GitHub repository">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zm3.163 21.783h-.093a.513.513 0 0 1-.382-.14.513.513 0 0 1-.14-.372v-1.406c.006-.467.01-.94.01-1.416a3.693 3.693 0 0 0-.151-1.028 1.832 1.832 0 0 0-.542-.875 8.014 8.014 0 0 0 2.038-.471 4.051 4.051 0 0 0 1.466-.964c.407-.427.71-.943.885-1.506a6.77 6.77 0 0 0 .3-2.13 4.138 4.138 0 0 0-.26-1.476 3.892 3.892 0 0 0-.795-1.284 2.81 2.81 0 0 0 .162-.582c.033-.2.05-.402.05-.604 0-.26-.03-.52-.09-.773a5.309 5.309 0 0 0-.221-.763.293.293 0 0 0-.111-.02h-.11c-.23.002-.456.04-.674.111a5.34 5.34 0 0 0-.703.26 6.503 6.503 0 0 0-.661.343c-.215.127-.405.249-.573.362a9.578 9.578 0 0 0-5.143 0 13.507 13.507 0 0 0-.572-.362 6.022 6.022 0 0 0-.672-.342 4.516 4.516 0 0 0-.705-.261 2.203 2.203 0 0 0-.662-.111h-.11a.29.29 0 0 0-.11.02 5.844 5.844 0 0 0-.23.763c-.054.254-.08.513-.081.773 0 .202.017.404.051.604.033.199.086.394.16.582A3.888 3.888 0 0 0 5.702 10a4.142 4.142 0 0 0-.263 1.476 6.871 6.871 0 0 0 .292 2.12c.181.563.483 1.08.884 1.516.415.422.915.75 1.466.964.653.25 1.337.41 2.033.476a1.828 1.828 0 0 0-.452.633 2.99 2.99 0 0 0-.2.744 2.754 2.754 0 0 1-1.175.27 1.788 1.788 0 0 1-1.065-.3 2.904 2.904 0 0 1-.752-.824 3.1 3.1 0 0 0-.292-.382 2.693 2.693 0 0 0-.372-.343 1.841 1.841 0 0 0-.432-.24 1.2 1.2 0 0 0-.481-.101c-.04.001-.08.005-.12.01a.649.649 0 0 0-.162.02.408.408 0 0 0-.13.06.116.116 0 0 0-.06.1.33.33 0 0 0 .14.242c.093.074.17.131.232.171l.03.021c.133.103.261.214.382.333.112.098.213.209.3.33.09.119.168.246.231.381.073.134.15.288.231.463.188.474.522.875.954 1.145.453.243.961.364 1.476.351.174 0 .349-.01.522-.03.172-.028.343-.057.515-.091v1.743a.5.5 0 0 1-.533.521h-.062a10.286 10.286 0 1 1 6.324 0v.005z"/></svg>
+          </a>
+        </div>
       </div>
 
       <div>
@@ -370,21 +392,86 @@
         .replace(/^-+|-+$/g, "");
     }
 
-    function extractField(yaml, field) {
-      const regex = new RegExp(`^\\s*${field}:\\s*(.+)$`, "m");
-      const match = yaml.match(regex);
-      return match ? match[1].trim() : "";
+    function splitYamlLines(yaml) {
+      return yaml.replace(/\r\n/g, "\n").split("\n");
     }
 
-    function extractTemplate(yaml) {
-      const lines = yaml.split("\n");
-      const start = lines.findIndex(line =>
-        line.trim().startsWith("template: |")
-      );
+    function getTopLevelIndent(lines) {
+      let minIndent = null;
+      let inTemplate = false;
+      let templateIndent = -1;
+
+      for (const line of lines) {
+        if (inTemplate) {
+          const currentIndent = line.search(/\S/);
+          if (currentIndent === -1) continue;
+          if (currentIndent <= templateIndent) {
+            inTemplate = false;
+          } else {
+            continue;
+          }
+        }
+
+        if (line.trim().startsWith("template: |")) {
+          inTemplate = true;
+          templateIndent = line.search(/\S/);
+          continue;
+        }
+
+        const listTypeMatch = line.match(/^(\s*-\s*)type:\s*/);
+        if (listTypeMatch) {
+          const listIndent = listTypeMatch[1].replace(/-\s*$/, "  ").length;
+          if (minIndent === null || listIndent < minIndent) {
+            minIndent = listIndent;
+          }
+          continue;
+        }
+
+        const keyMatch = line.match(/^(\s*)[a-zA-Z0-9-]+:\s*/);
+        if (!keyMatch) continue;
+
+        const indentLen = keyMatch[1].length;
+        if (minIndent === null || indentLen < minIndent) {
+          minIndent = indentLen;
+        }
+      }
+
+      return minIndent;
+    }
+
+    function isTopLevelLine(line, topIndent) {
+      if (topIndent === null) return true;
+      return line.search(/\S/) === topIndent;
+    }
+
+    function extractField(lines, field, topIndent) {
+      const regex = new RegExp(`^\\s*${field}:\\s*(.+)$`);
+      for (const line of lines) {
+        const match = line.match(regex);
+        if (!match) continue;
+        if (!isTopLevelLine(line, topIndent)) continue;
+        return match[1].trim();
+      }
+      return "";
+    }
+
+    function extractTemplate(lines, topIndent) {
+      let start = -1;
+      let templateIndent = -1;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim().startsWith("template: |")) continue;
+        if (!isTopLevelLine(line, topIndent)) continue;
+        start = i;
+        templateIndent = line.search(/\S/);
+        break;
+      }
 
       if (start === -1) return "";
 
       const result = [];
+      let contentIndent = null;
 
       for (let i = start + 1; i < lines.length; i++) {
         const line = lines[i];
@@ -394,76 +481,189 @@
           continue;
         }
 
-        if (!line.startsWith("    ")) break;
-        result.push(line.slice(4));
+        const currentIndent = line.search(/\S/);
+
+        if (currentIndent <= templateIndent) break;
+
+        if (contentIndent === null) {
+          contentIndent = currentIndent;
+        }
+
+        if (currentIndent < contentIndent) break;
+        result.push(line.slice(contentIndent));
       }
 
       return result.join("\n").trim();
     }
 
-    function extractAdditionalFields(yaml, excludedFields) {
-      const excluded = new Set(excludedFields);
-      const lines = yaml.split("\n");
-      const fields = [];
-      let inTemplateBlock = false;
+    function extractYamlBlock(lines, fieldName, topIndent) {
+      const blockLines = [];
+      let fieldIndent = -1;
+      let inBlock = false;
 
-      for (const line of lines) {
-        if (line.trim().startsWith("template: |")) {
-          inTemplateBlock = true;
-          continue;
-        }
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
 
-        if (inTemplateBlock) {
-          if (line.startsWith("    ") || line.trim() === "") {
+        if (!inBlock) {
+          const match = line.match(new RegExp(`^(\\s*)${fieldName}:(\\s*.*)$`));
+          if (match) {
+            if (topIndent !== null && match[1].length !== topIndent) continue;
+            fieldIndent = match[1].length;
+            blockLines.push(`${fieldName}:${match[2].trimEnd()}`);
+            inBlock = true;
+          }
+        } else {
+          const trimmed = line.trim();
+
+          if (trimmed === '') {
+            blockLines.push('');
             continue;
           }
 
-          inTemplateBlock = false;
+          const currentIndent = line.search(/\S/);
+
+          if (currentIndent <= fieldIndent) {
+            break;
+          }
+
+          const relativeIndent = currentIndent - fieldIndent;
+          blockLines.push(' '.repeat(relativeIndent) + trimmed);
         }
-
-        const match = line.match(/^\s*([a-zA-Z0-9-]+):\s*(.+)$/);
-
-        if (!match) {
-          continue;
-        }
-
-        const key = match[1];
-        const value = match[2].trim();
-
-        if (excluded.has(key)) {
-          continue;
-        }
-
-        fields.push({ key, value });
       }
 
-      return fields;
+      while (blockLines.length > 0 && blockLines[blockLines.length - 1] === '') {
+        blockLines.pop();
+      }
+
+      return blockLines.length > 0 ? blockLines.join('\n') : null;
+    }
+
+    // Keep original layout; only swap/remove top-level fields.
+    function buildWidgetConfig(lines, topIndent, slug) {
+      const output = [];
+      let skipBlockIndent = null;
+      let insertedWidget = false;
+      let replacedType = false;
+      const topIndentStr = topIndent === null ? "" : " ".repeat(topIndent);
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (skipBlockIndent !== null) {
+          const currentIndent = line.search(/\S/);
+          if (currentIndent === -1) continue;
+          if (currentIndent <= skipBlockIndent) {
+            skipBlockIndent = null;
+          } else {
+            continue;
+          }
+        }
+
+        const listTypeMatch = line.match(/^(\s*-\s*)type:\s*(.+)$/);
+        if (listTypeMatch) {
+          replacedType = true;
+          output.push(`${listTypeMatch[1]}type: dynawidgets`);
+          if (!insertedWidget) {
+            const widgetIndent = topIndent === null
+              ? listTypeMatch[1].replace(/-\s*$/, "  ")
+              : topIndentStr;
+            output.push(`${widgetIndent}widget: ${slug}`);
+            insertedWidget = true;
+          }
+          continue;
+        }
+
+        const mapTypeMatch = line.match(/^(\s*)type:\s*(.+)$/);
+        if (mapTypeMatch && isTopLevelLine(line, topIndent)) {
+          replacedType = true;
+          output.push(`${mapTypeMatch[1]}type: dynawidgets`);
+          if (!insertedWidget) {
+            const widgetIndent = topIndent === null ? mapTypeMatch[1] : topIndentStr;
+            output.push(`${widgetIndent}widget: ${slug}`);
+            insertedWidget = true;
+          }
+          continue;
+        }
+
+        if (line.match(/^\s*widget:\s*/)) {
+          if (isTopLevelLine(line, topIndent)) continue;
+        }
+
+        const templateMatch = line.match(/^\s*template:\s*(.*)$/);
+        if (templateMatch && isTopLevelLine(line, topIndent)) {
+          const value = templateMatch[1].trim();
+          if (value === "|" || value === ">" || value === "") {
+            skipBlockIndent = line.search(/\S/);
+          }
+          continue;
+        }
+
+        if (line.match(/^\s*url:\s*/)) {
+          if (isTopLevelLine(line, topIndent)) continue;
+        }
+
+        const headersMatch = line.match(/^\s*headers:\s*(.*)$/);
+        if (headersMatch && isTopLevelLine(line, topIndent)) {
+          if (headersMatch[1].trim() === "") {
+            skipBlockIndent = line.search(/\S/);
+          }
+          continue;
+        }
+
+        const subrequestsMatch = line.match(/^\s*subrequests:\s*(.*)$/);
+        if (subrequestsMatch && isTopLevelLine(line, topIndent)) {
+          if (subrequestsMatch[1].trim() === "") {
+            skipBlockIndent = line.search(/\S/);
+          }
+          continue;
+        }
+
+        output.push(line);
+      }
+
+      if (!replacedType) {
+        output.unshift(`${topIndentStr}widget: ${slug}`);
+        output.unshift(`${topIndentStr}type: dynawidgets`);
+      } else if (replacedType && !insertedWidget) {
+        output.unshift(`${topIndentStr}widget: ${slug}`);
+      }
+
+      while (output.length > 0 && output[output.length - 1].trim() === "") {
+        output.pop();
+      }
+
+      return output.join("\n");
     }
 
     function convertWidget() {
       const input = document.getElementById("input").value;
+      const lines = splitYamlLines(input);
+      const topIndent = getTopLevelIndent(lines);
       const author =
         document.getElementById("author").value.trim() || "unknown";
 
-      const title = extractField(input, "title") || "Untitled Widget";
-      const url = extractField(input, "url");
+      const title = extractField(lines, "title", topIndent) || "Untitled Widget";
+      const url = extractField(lines, "url", topIndent);
       const slug = slugify(title);
-      const template = extractTemplate(input);
-      const additionalFields = extractAdditionalFields(input, [
-        "type",
-        "url",
-        "template"
-      ]);
+      const template = extractTemplate(lines, topIndent);
 
       let templateTxt = template;
 
-      if (url) {
-        templateTxt += `\n\nrequired: |\n  url: ${url}`;
-      }
+      const headersBlock = extractYamlBlock(lines, 'headers', topIndent);
+      const subrequestsBlock = extractYamlBlock(lines, 'subrequests', topIndent);
 
-      const additionalConfig = additionalFields
-        .map(field => `  ${field.key}: ${field.value}`)
-        .join("\n");
+      if (url || headersBlock || subrequestsBlock) {
+        const requiredLines = [];
+        if (url) requiredLines.push(`  url: ${url}`);
+        if (headersBlock) {
+          headersBlock.split('\n').forEach(line => requiredLines.push(`  ${line}`));
+        }
+        if (subrequestsBlock) {
+          subrequestsBlock.split('\n').forEach(line => requiredLines.push(`  ${line}`));
+        }
+        templateTxt += `\n\nrequired: |\n${requiredLines.join('\n')}`;
+      }
+      const widgetConfig = buildWidgetConfig(lines, topIndent, slug);
 
       const metaYml = `title: ${title}
 description: Converted custom-api widget
@@ -473,9 +673,7 @@ author: ${author}`;
 
 ## Configuration
 \`\`\`yaml
-- type: dynawidgets
-  widget: ${slug}
-${additionalConfig ? `${additionalConfig}\n` : ""}\`\`\`
+${widgetConfig}\n\`\`\`
 `;
 
       generated = {

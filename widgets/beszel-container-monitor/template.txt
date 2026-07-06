@@ -1,0 +1,73 @@
+{{ $containers := .JSON.Array "items" }}
+
+{{ if gt (len $containers) 0 }}
+<div style="max-height:360px; overflow:auto; border-radius:6px;">
+  <table style="width: 100%; border-collapse: collapse; table-layout: auto;" class="size-h5">
+    <thead>
+      <tr style="border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);">
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: left; padding-left: 0;">Name</th>
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: right;">CPU</th>
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: right;">Memory</th>
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: right;">Network</th>
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: center;">Health</th>
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: left;">Image</th>
+        <th style="position: sticky; top: 0; z-index: 2; background: hsl(var(--bgh), var(--bgs), calc(var(--bgl) + 1%)); box-shadow: 0 2px 0 color-mix(in srgb, currentColor 8%, transparent); color: var(--color-text-base); font-weight: 700; text-transform: uppercase; white-space: nowrap; padding: 6px; text-align: left; padding-right: 0;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range $index, $container := $containers }}
+      {{ $isEven := eq (mod $index 2) 0 }}
+
+      {{ $cpuPercent  := .Float "cpu" }}
+      {{ $memoryMB    := .Float "memory" }}
+      {{ $networkBps  := .Float "net" }}
+      {{ $healthState := .Int   "health" }}
+
+      {{ $cpuIsHigh    := ge $cpuPercent 10.0 }}
+      {{ $memoryIsHigh := ge $memoryMB 1024.0 }}
+      {{ $networkIsMB  := ge $networkBps 1048576.0 }}
+      {{ $networkIsKB  := ge $networkBps 1024.0 }}
+      {{ $isHealthy    := eq $healthState 2 }}
+      {{ $isUnhealthy  := eq $healthState 1 }}
+
+      <tr style="border-bottom: 1px solid color-mix(in srgb, currentColor 4%, transparent); {{ if $isEven }}background: color-mix(in srgb, currentColor 3%, transparent);{{ end }}">
+        <td style="white-space: nowrap; padding: 6px; text-align: left; padding-left: 0; color: var(--color-text-base); font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis;">{{ .String "name" }}</td>
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $cpuIsHigh }}var(--color-negative){{ else }}var(--color-text-base){{ end }};">
+          {{- printf "%.2f" $cpuPercent }}%
+        </td>
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $memoryIsHigh }}var(--color-negative){{ else }}var(--color-text-base){{ end }};">
+          {{- if $memoryIsHigh }}{{ printf "%.2f" (div $memoryMB 1024.0) }} GB
+          {{- else }}{{ printf "%.0f" $memoryMB }} MB{{ end }}
+        </td>
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: right; color: {{ if $networkIsMB }}var(--color-negative){{ else }}var(--color-text-base){{ end }};">
+          {{- if $networkIsMB }}{{ printf "%.1f" (div $networkBps 1048576.0) }} MB/s
+          {{- else if $networkIsKB }}{{ printf "%.1f" (div $networkBps 1024.0) }} KB/s
+          {{- else }}{{ printf "%.0f" $networkBps }} B/s{{ end }}
+        </td>
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: center;">
+          {{- if $isHealthy }}<span style="color: var(--color-positive);" title="Healthy" aria-label="Healthy">●</span>
+          {{- else if $isUnhealthy }}<span style="color: var(--color-negative);" title="Unhealthy" aria-label="Unhealthy">●</span>
+          {{- else }}<span class="color-subdue" title="No healthcheck" aria-label="No healthcheck">—</span>{{ end }}
+        </td>
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: left; color: var(--color-text-subdue); max-width: 130px; overflow: hidden; text-overflow: ellipsis;">{{ .String "image" }}</td>
+        
+        <td style="white-space: nowrap; padding: 6px; text-align: left; padding-right: 0; color: var(--color-text-subdue);">{{ .String "status" }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</div>
+{{ else }}
+<p class="color-subdue">No containers found.</p>
+{{ end }}
+
+
+required: |
+  url: ${BESZEL_URL}/api/collections/containers/records?sort=name&fields=name,cpu,memory,net,health,image,status
+  headers:
+    Authorization: Bearer ${BESZEL_API_TOKEN}
