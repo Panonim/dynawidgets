@@ -1,0 +1,125 @@
+<style>
+  .summary-dynacat-proxmox-backups {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 14px;
+    background: rgba(128,128,128,0.08);
+    border: 1px solid var(--color-separator);
+    border-radius: 8px;
+  }
+  .row-dynacat-proxmox-backups {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 8px;
+    margin: 0 -8px;
+    border-top: 1px solid var(--color-separator);
+    border-radius: 8px;
+    text-decoration: none !important;
+    transition: background 0.15s;
+  }
+  .row-dynacat-proxmox-backups:hover {
+    background: rgba(128,128,128,0.08);
+  }
+  .row-main-dynacat-proxmox-backups {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .row-icon-dynacat-proxmox-backups {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+</style>
+
+<div>
+  {{ $backups := .JSON.Array "data" }}
+  {{ $totalBackups := len $backups }}
+  {{ $totalSize := 0.0 }}
+  {{ range $backups }}{{ $totalSize = add $totalSize (.Float "size") }}{{ end }}
+
+  {{ $uniqueVMIDs := 0 }}
+  {{ $lastVMID := "" }}
+  {{ $lastSubtype := "" }}
+  {{ range $backups }}
+    {{ $vmid := .String "vmid" }}
+    {{ $subtype := .String "subtype" }}
+    {{ if ne (printf "%s-%s" $vmid $subtype) (printf "%s-%s" $lastVMID $lastSubtype) }}
+      {{ $uniqueVMIDs = add $uniqueVMIDs 1 }}
+      {{ $lastVMID = $vmid }}
+      {{ $lastSubtype = $subtype }}
+    {{ end }}
+  {{ end }}
+
+  <div class="summary-dynacat-proxmox-backups">
+    <div style="text-align:center;">
+      <div class="color-positive size-h2">{{ $uniqueVMIDs }}</div>
+      <div class="size-h6">BACKED UP</div>
+    </div>
+    <div style="text-align:center;">
+      <div class="color-highlight size-h2">
+        {{ if ge $totalSize 1099511627776.0 }}{{ printf "%.2f TB" (div $totalSize 1099511627776.0) }}{{ else }}{{ printf "%.0f GB" (div $totalSize 1073741824.0) }}{{ end }}
+      </div>
+      <div class="size-h6">TOTAL BACKUP SIZE</div>
+    </div>
+  </div>
+
+  {{ if gt $totalBackups 0 }}
+    <div class="size-h6 color-subdue" style="margin-bottom:10px;">LATEST BACKUP PER VM/LXC</div>
+    {{ $lastVMID := "" }}
+    {{ $lastSubtype := "" }}
+    {{ range $index, $backup := $backups }}
+      {{ $vmid := $backup.String "vmid" }}
+      {{ $subtype := $backup.String "subtype" }}
+      {{ if ne (printf "%s-%s" $vmid $subtype) (printf "%s-%s" $lastVMID $lastSubtype) }}
+        {{ $notes := $backup.String "notes" }}
+        {{ $displayName := "" }}
+        {{ $iconUrl := "" }}
+        {{/*
+          Optional: give specific VMIDs a friendly name + icon, e.g.:
+          {{ if eq $vmid "100" }}{{ $displayName = "Home Assistant" }}{{ $iconUrl = "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/home-assistant.svg" }}
+          {{ else if eq $vmid "101" }}{{ $displayName = "Dynacat" }}{{ $iconUrl = "https://cdn.jsdelivr.net/gh/selfhst/icons/svg/dynacat-light.svg" }}
+          {{ else if ne $notes "" }}{{ $displayName = $notes }}
+          Anything not listed falls back to the backup's own "notes" field
+          (set when you name the backup job in Proxmox), then to a generic
+          "VM <id>" / "LXC <id>" label — so this works with zero setup.
+        */}}
+        {{ if ne $notes "" }}{{ $displayName = $notes }}
+        {{ else }}{{ if eq $subtype "qemu" }}{{ $displayName = printf "VM %s" $vmid }}{{ else }}{{ $displayName = printf "LXC %s" $vmid }}{{ end }}
+        {{ end }}
+        {{ $consoleUrl := printf "${PROXMOX_WEB_URL}/#v1:0:=%s%%2F%s:4:=jsconsole::::8:21:21" $subtype $vmid }}
+        <a class="row-dynacat-proxmox-backups" href="{{ $consoleUrl }}" target="_blank" rel="noreferrer">
+          <div class="row-main-dynacat-proxmox-backups">
+            {{ if ne $iconUrl "" }}<img class="row-icon-dynacat-proxmox-backups" src="{{ $iconUrl }}" alt="">{{ end }}
+            <div>
+              <div class="size-h5 color-highlight">{{ $displayName }}</div>
+              <div class="size-h6 color-subdue">{{ if eq $subtype "qemu" }}VM{{ else }}LXC{{ end }} {{ $vmid }}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            {{ $size := $backup.Float "size" }}
+            <div class="size-h6 color-subdue">
+              {{ if ge $size 1073741824.0 }}{{ printf "%.2f GB" (div $size 1073741824.0) }}{{ else }}{{ printf "%.0f MB" (div $size 1048576.0) }}{{ end }}
+            </div>
+            <div class="size-h6 color-positive">✓ backed up</div>
+          </div>
+        </a>
+        {{ $lastVMID = $vmid }}
+        {{ $lastSubtype = $subtype }}
+      {{ end }}
+    {{ end }}
+  {{ else }}
+    <p class="color-subdue">No backups found on this storage.</p>
+  {{ end }}
+</div>
+
+required: |
+  url: https://${PROXMOX_HOST}:8006/api2/json/nodes/${PROXMOX_NODE}/storage/${PROXMOX_STORAGE}/content
+  allow-insecure: true
+  headers:
+    Accept: application/json
+    Authorization: PVEAPIToken=${PROXMOX_API_TOKEN}

@@ -1,0 +1,3 @@
+title: Proxmox Backups
+description: Summary of VM/LXC backups on a Proxmox Backup Server storage — totals plus latest backup per guest, with clickable rows into the Proxmox console.
+author: kua8
