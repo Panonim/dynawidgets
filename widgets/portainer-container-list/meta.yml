@@ -1,0 +1,3 @@
+title: Portainer Container List
+description: Displays containers from a Portainer environment without exposing a remote Docker socket.
+author: M1XZG

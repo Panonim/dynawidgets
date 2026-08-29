@@ -1,0 +1,82 @@
+<style>
+  .container-grid-portainer-container-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem 1.1rem;
+  }
+
+  .container-item-portainer-container-list {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.65rem;
+  }
+
+  @media (max-width: 900px) {
+    .container-grid-portainer-container-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 550px) {
+    .container-grid-portainer-container-list {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{{ $containers := .JSON.Array "" | sortByString "Names.0" "asc" }}
+{{ if eq (len $containers) 0 }}
+  <p class="color-subdue">No containers found.</p>
+{{ else }}
+  <div class="container-grid-portainer-container-list">
+    {{ range $containers }}
+      {{ $rawName := .String "Names.0" | trimPrefix "/" }}
+      {{ $name := .String "Labels.dynacat\\.name" }}
+      {{ if eq $name "" }}{{ $name = .String "Labels.glance\\.name" }}{{ end }}
+      {{ if eq $name "" }}{{ $name = $rawName }}{{ end }}
+
+      {{ $description := .String "Labels.dynacat\\.description" }}
+      {{ if eq $description "" }}{{ $description = .String "Labels.glance\\.description" }}{{ end }}
+      {{ if eq $description "" }}{{ $description = .String "Image" }}{{ end }}
+
+      {{ $url := .String "Labels.dynacat\\.url" }}
+      {{ if eq $url "" }}{{ $url = .String "Labels.glance\\.url" }}{{ end }}
+
+      {{ $state := .String "State" }}
+      {{ $status := .String "Status" }}
+      {{ $unhealthy := findMatch "unhealthy" $status }}
+      {{ $healthy := and (eq $state "running") (eq $unhealthy "") }}
+      {{ $hideValue := .String "Labels.dynacat\\.hide" }}
+      {{ if eq $hideValue "" }}{{ $hideValue = .String "Labels.glance\\.hide" }}{{ end }}
+      {{ $hidden := or (eq $hideValue "true") (eq $hideValue "1") }}
+
+      {{ if not $hidden }}
+      <div class="container-item-portainer-container-list">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="color-subdue" style="width: 1.5rem; height: 1.5rem; flex: 0 0 auto;">
+          <path d="M13.5 4.5h3v3h-3zm-4 0h3v3h-3zm-4 0h3v3h-3zm4-4h3v3h-3zm4 8h3v3h-3zm-4 0h3v3h-3zm-4 0h3v3h-3zm-4 0h3v3h-3z"/>
+          <path d="M23.6 10.8c-.7-.5-2.2-.7-3.4-.4-.1-1.2-.8-2.2-1.8-3l-.6-.4-.4.6c-.5.8-.7 2-.6 2.9.1.6.3 1.1.6 1.5-.8.4-1.9.5-2.5.5H.4l-.1.8c-.2 2.3.2 4.6 1.3 6.4 1.2 2 3.1 3 5.7 3 5.7 0 9.9-2.6 11.9-7.4 1.3.1 3.6 0 4.8-2.3.1-.1.3-.6.4-.8l-.8-.4Z"/>
+        </svg>
+        <div class="grow min-width-0">
+          <div class="flex items-center gap-7">
+            {{ if ne $url "" }}
+              <a href="{{ $url }}" class="text-truncate color-highlight" target="_blank" rel="noreferrer">{{ $name }}</a>
+            {{ else }}
+              <span class="text-truncate color-highlight">{{ $name }}</span>
+            {{ end }}
+            <span
+              style="width: 0.5rem; height: 0.5rem; border-radius: 50%; flex: 0 0 auto;
+                {{ if $healthy }}background-color: var(--color-positive);{{ else }}background-color: var(--color-negative);{{ end }}"
+              title="{{ $status }}"
+            ></span>
+          </div>
+          <div class="text-truncate color-subdue size-h6">{{ $description }}</div>
+        </div>
+      </div>
+      {{ end }}
+    {{ end }}
+  </div>
+{{ end }}
+
+required: |
+  url: "${PORTAINER_URL}/api/endpoints/${PORTAINER_ENDPOINT_ID}/docker/containers/json?all=0"
