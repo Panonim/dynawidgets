@@ -6,6 +6,10 @@ library usage, other disk usage, total disk capacity, and disk utilization.
 The `storage` subrequest is required. The widget configuration must include the
 URL, API headers, and subrequest shown below.
 
+## Preview
+
+![Immich Server Stats widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
