@@ -3,6 +3,10 @@
 Displays the connection state and recent Docker snapshot counts for one
 Portainer environment.
 
+## Preview
+
+![Portainer Endpoint Summary widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
