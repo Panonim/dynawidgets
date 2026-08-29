@@ -1,0 +1,44 @@
+{{ $indicator := .JSON.String "status.indicator" }}
+{{ $description := .JSON.String "status.description" }}
+
+<div>
+  <div class="flex items-center gap-10 margin-bottom-15">
+    <span style="width: 0.65rem; height: 0.65rem; border-radius: 50%; flex: 0 0 auto;
+      {{ if eq $indicator "none" }}background-color: var(--color-positive);
+      {{ else if eq $indicator "minor" }}background-color: var(--color-highlight);
+      {{ else if or (eq $indicator "major") (eq $indicator "critical") }}background-color: var(--color-negative);
+      {{ else }}background-color: var(--color-text-subdue);{{ end }}"></span>
+    <div>
+      <a class="size-h6 color-highlight" href="https://status.bambulab.com/" target="_blank" rel="noreferrer">Bambu Lab service status</a>
+      <div class="size-h4">{{ $description }}</div>
+    </div>
+  </div>
+
+  <ul class="list list-gap-8">
+    {{ range .JSON.Array "components" }}
+      {{ $status := .String "status" }}
+      {{ $hiddenWhenHealthy := and (.Bool "only_show_if_degraded") (eq $status "operational") }}
+      {{ if and (not (.Bool "group")) (not $hiddenWhenHealthy) }}
+        <li class="flex items-center gap-10">
+          <span style="width: 0.5rem; height: 0.5rem; border-radius: 50%; flex: 0 0 auto;
+            {{ if eq $status "operational" }}background-color: var(--color-positive);
+            {{ else if eq $status "degraded_performance" }}background-color: var(--color-highlight);
+            {{ else if eq $status "under_maintenance" }}background-color: var(--color-text-subdue);
+            {{ else }}background-color: var(--color-negative);{{ end }}"></span>
+          <span class="size-h6">{{ .String "name" }}</span>
+          <span class="size-h6 color-subdue" style="margin-left: auto;">
+            {{ if eq $status "operational" }}Operational
+            {{ else if eq $status "degraded_performance" }}Degraded
+            {{ else if eq $status "partial_outage" }}Partial Outage
+            {{ else if eq $status "major_outage" }}Major Outage
+            {{ else if eq $status "under_maintenance" }}Maintenance
+            {{ else }}{{ $status }}{{ end }}
+          </span>
+        </li>
+      {{ end }}
+    {{ end }}
+  </ul>
+</div>
+
+required: |
+  url: https://status.bambulab.com/api/v2/summary.json
