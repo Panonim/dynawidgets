@@ -2,6 +2,10 @@
 
 Displays Bambu Lab's overall service health and individual service components.
 
+## Preview
+
+![Bambu Lab Status widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
