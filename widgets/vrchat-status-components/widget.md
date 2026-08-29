@@ -3,6 +3,10 @@
 Displays VRChat's overall service health and grouped components from the
 official VRChat Status page.
 
+## Preview
+
+![VRChat Status widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
