@@ -1,7 +1,7 @@
 # Immich Server Stats
 
 Displays the number of photos and videos in an Immich library together with
-used storage, total disk capacity, and disk utilization.
+library usage, available disk space, total disk capacity, and disk utilization.
 
 The `storage` subrequest is required. The widget configuration must include the
 URL, API headers, and subrequest shown below.

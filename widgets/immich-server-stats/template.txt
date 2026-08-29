@@ -5,11 +5,13 @@
 {{ $storageOK := and (ge $storage.Response.StatusCode 200) (le $storage.Response.StatusCode 299) }}
 {{ $totalGiB := 0.0 }}
 {{ $diskUsedGiB := 0.0 }}
+{{ $availableGiB := 0.0 }}
 {{ $percentage := 0.0 }}
 
 {{ if $storageOK }}
   {{ $totalGiB = div (toFloat ($storage.JSON.Int "diskSizeRaw")) 1073741824.0 }}
   {{ $diskUsedGiB = div (toFloat ($storage.JSON.Int "diskUseRaw")) 1073741824.0 }}
+  {{ $availableGiB = div (toFloat ($storage.JSON.Int "diskAvailableRaw")) 1073741824.0 }}
   {{ $percentage = $storage.JSON.Float "diskUsagePercentage" }}
 {{ end }}
 
@@ -26,6 +28,12 @@
     <div style="background-color: var(--color-widget-background-highlight); border-radius: var(--border-radius); padding: 1rem;">
       <div class="size-h6 color-subdue">USED STORAGE</div>
       <div class="size-h3 color-highlight">{{ printf "%.1f" $usageGiB }} GiB</div>
+    </div>
+    <div style="background-color: var(--color-widget-background-highlight); border-radius: var(--border-radius); padding: 1rem;">
+      <div class="size-h6 color-subdue">AVAILABLE</div>
+      <div class="size-h3 color-highlight">
+        {{ if $storageOK }}{{ printf "%.1f" $availableGiB }} GiB{{ else }}Unavailable{{ end }}
+      </div>
     </div>
   </div>
 
