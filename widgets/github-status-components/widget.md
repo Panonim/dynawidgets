@@ -3,6 +3,10 @@
 Displays GitHub's overall service health and the public components listed on
 GitHub Status.
 
+## Preview
+
+![GitHub Status widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
