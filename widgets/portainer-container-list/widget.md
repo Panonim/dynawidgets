@@ -5,6 +5,10 @@ Dynacat to connect to an exposed Docker socket. Container names, descriptions,
 and links use `dynacat.*` labels when available, with backward-compatible
 support for `glance.*` labels.
 
+## Preview
+
+![Portainer Container List widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
