@@ -3,6 +3,10 @@
 Displays Claude's overall service health and grouped components from the
 official Claude Status page.
 
+## Preview
+
+![Claude Status widget](images/preview.png)
+
 ## Configuration
 
 ```yaml
