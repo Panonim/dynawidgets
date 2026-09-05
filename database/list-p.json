@@ -1,5 +1,12 @@
 [
   {
+    "title": "Portainer Container List",
+    "description": "Displays containers from a Portainer environment without exposing a remote Docker socket.",
+    "author": "M1XZG",
+    "slug": "portainer-container-list",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/portainer-container-list/template.txt"
+  },
+  {
     "title": "Portainer Endpoint Summary",
     "description": "Displays connectivity and Docker resource counts for a Portainer environment.",
     "author": "M1XZG",
