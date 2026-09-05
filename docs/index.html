@@ -385,6 +385,56 @@
       markdown: ""
     };
 
+    // Collects ${VAR} placeholders from the raw config, first-seen order.
+    function extractEnvVars(input) {
+      const found = [];
+      const seen = new Set();
+      const regex = /\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g;
+      let match;
+
+      while ((match = regex.exec(input)) !== null) {
+        if (seen.has(match[1])) continue;
+        seen.add(match[1]);
+        found.push(match[1]);
+      }
+
+      return found;
+    }
+
+    // A var starting a url: value carries the scheme itself, so it must include one.
+    function extractSchemeVars(input) {
+      const needsScheme = new Set();
+      const regex = /^\s*(?:-\s*)?url:\s*(.+)$/gm;
+      let match;
+
+      while ((match = regex.exec(input)) !== null) {
+        const value = match[1].trim().replace(/^["']|["']$/g, "");
+        const leading = value.match(/^\$\{([A-Za-z_][A-Za-z0-9_]*)\}/);
+        if (leading) needsScheme.add(leading[1]);
+      }
+
+      return needsScheme;
+    }
+
+    function buildEnvVarSection(vars, schemeVars) {
+      if (vars.length === 0) return "";
+
+      const rows = vars.map(name => {
+        const description = schemeVars.has(name)
+          ? "Base URL of the server, without a trailing slash. Must be prefixed with either `https://` or `http://`."
+          : "Describe what this value is.";
+        return `| \`${name}\` | ${description} |`;
+      });
+
+      return `
+## Environment variables
+
+| Variable | Description |
+| --- | --- |
+${rows.join("\n")}
+`;
+    }
+
     function slugify(text) {
       return text
         .toLowerCase()
@@ -669,12 +719,15 @@
 description: Converted custom-api widget
 author: ${author}`;
 
+      const envVars = extractEnvVars(input);
+      const schemeVars = extractSchemeVars(input);
+
       const widgetMd = `# ${title}
 
 ## Configuration
 \`\`\`yaml
 ${widgetConfig}\n\`\`\`
-`;
+${buildEnvVarSection(envVars, schemeVars)}`;
 
       generated = {
         slug,

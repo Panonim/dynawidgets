@@ -1,0 +1,9 @@
+[
+  {
+    "title": "Beszel Container Monitor",
+    "description": "Displays resource usage (CPU, memory, network), uptime, and health indicators for Docker containers via the Beszel API.",
+    "author": "DenushanGithub",
+    "slug": "beszel-container-monitor",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/beszel-container-monitor/template.txt"
+  }
+]

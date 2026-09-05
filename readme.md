@@ -7,7 +7,11 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 # --- WIDGETS LIST ---
 <!-- AUTO-GENERATED:START -->
 ## Search
-[C](#c) | [L](#l) | [R](#r) | [T](#t) | [U](#u) | [W](#w)
+[B](#b) | [C](#c) | [L](#l) | [P](#p) | [R](#r) | [T](#t) | [U](#u) | [W](#w)
+
+## B
+- [**Beszel Container Monitor**](widgets/beszel-container-monitor/widget.md) — Displays resource usage (CPU, memory, network), uptime, and health indicators for Docker containers via the Beszel API.
+  - Author: DenushanGithub
 
 ## C
 - [**Caddy Routes**](widgets/caddy-routes/widget.md) — External and local links to your services proxied through Caddy.
@@ -22,6 +26,12 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 ## L
 - [**Linkding Dashboard**](widgets/linkding-dashboard/widget.md) — Display statistics and recently added bookmarks from your Linkding instance
   - Author: whysofurious
+
+## P
+- [**Portainer Endpoint Summary**](widgets/portainer-endpoint-summary/widget.md) — Displays connectivity and Docker resource counts for a Portainer environment.
+  - Author: M1XZG
+- [**Proxmox Backups**](widgets/dynacat-proxmox-backups/widget.md) — Summary of VM/LXC backups on a Proxmox Backup Server storage — totals plus latest backup per guest, with clickable rows into the Proxmox console.
+  - Author: kua8
 
 ## R
 - [**Random Dog**](widgets/random-dog/widget.md) — Display random images of dogs.

@@ -3,6 +3,7 @@ const path = require('path');
 const yaml = require('js-yaml');
 
 const widgetsDir = path.join(__dirname, '..', 'widgets');
+const imageExtensions = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg']);
 
 function validateYamlBlock(source, block, errors) {
   try {
@@ -67,6 +68,18 @@ function validateWidgets() {
       const requiredMatch = template.match(/(?:^|\n)required: \|\n([\s\S]*)$/);
       if (requiredMatch) {
         validateYamlBlock('template.txt: required YAML', requiredMatch[1], errors);
+      }
+    }
+
+    // contributing.md requires at least one preview image under images/
+    const imagesDir = path.join(widgetPath, 'images');
+    if (!fs.existsSync(imagesDir)) {
+      errors.push('Missing images/ directory (at least one preview image is required)');
+    } else {
+      const hasImage = fs.readdirSync(imagesDir)
+        .some(f => imageExtensions.has(path.extname(f).toLowerCase()));
+      if (!hasImage) {
+        errors.push('images/: no preview image found (at least one is required)');
       }
     }
 

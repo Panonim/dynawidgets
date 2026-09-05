@@ -12,8 +12,6 @@ jobs:
     if: "!(github.base_ref == 'main' && github.head_ref == 'testing')"
     permissions:
       contents: read
-      issues: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,46 +50,29 @@ jobs:
           npm ci
           node scripts/validate-widgets.js > validation.txt 2>&1 || exit 1
 
-      - name: Post consolidated comment
-        if: >
-          steps.check_targeting.outcome == 'failure' ||
-          steps.check_files.outcome == 'failure' ||
-          steps.validate.outcome == 'failure'
-        uses: actions/github-script@v7
+      # PR-triggered runs (incl. forks) get a read-only token, so this job can't comment itself.
+      # It hands outcomes to pr-comment.yml via artifact, which runs privileged and looks up the PR itself.
+      - name: Record outcomes
+        if: always()
+        run: |
+          echo "${{ steps.check_targeting.outcome }}" > check_targeting_outcome.txt
+          echo "${{ steps.check_files.outcome }}" > check_files_outcome.txt
+          echo "${{ steps.validate.outcome }}" > validate_outcome.txt
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          script: |
-            const fs = require('fs');
-            const sections = [];
-
-            if ('${{ steps.check_targeting.outcome }}' === 'failure') {
-              sections.push('### ❌ Invalid target branch\n\nPR must target the `testing` branch.');
-            }
-
-            if ('${{ steps.check_files.outcome }}' === 'failure') {
-              let files = '';
-              try { files = fs.readFileSync('invalid_files.txt', 'utf8').trim(); } catch {}
-              sections.push(
-                '### ❌ Files outside `widgets/`\n\n' +
-                'Only files under `widgets/` may be changed in a PR.\n\n' +
-                '```\n' + files + '\n```'
-              );
-            }
-
-            if ('${{ steps.validate.outcome }}' === 'failure') {
-              let output = '';
-              try { output = fs.readFileSync('validation.txt', 'utf8').trim(); } catch {}
-              sections.push('### ❌ Widget validation failed\n\n```\n' + output + '\n```');
-            }
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body:
-                '## ❌ PR validation failed\n\n' +
-                'Please fix the following before merging:\n\n' +
-                sections.join('\n\n---\n\n'),
-            });
+          name: pr-validation-results
+          path: |
+            check_targeting_outcome.txt
+            check_files_outcome.txt
+            validate_outcome.txt
+            targeting_error.txt
+            invalid_files.txt
+            validation.txt
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Fail if any checks failed
         if: >
