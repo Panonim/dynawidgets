@@ -28,6 +28,8 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
   - Author: whysofurious
 
 ## P
+- [**Portainer Endpoint Summary**](widgets/portainer-endpoint-summary/widget.md) — Displays connectivity and Docker resource counts for a Portainer environment.
+  - Author: M1XZG
 - [**Proxmox Backups**](widgets/dynacat-proxmox-backups/widget.md) — Summary of VM/LXC backups on a Proxmox Backup Server storage — totals plus latest backup per guest, with clickable rows into the Proxmox console.
   - Author: kua8
 

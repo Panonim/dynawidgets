@@ -1,0 +1,9 @@
+[
+  {
+    "title": "Portainer Endpoint Summary",
+    "description": "Displays connectivity and Docker resource counts for a Portainer environment.",
+    "author": "M1XZG",
+    "slug": "portainer-endpoint-summary",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/portainer-endpoint-summary/template.txt"
+  }
+]
