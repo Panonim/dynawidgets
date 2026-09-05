@@ -4,5 +4,5 @@
       {{ .JSON.String "title" }}
     </a>
   </h3>
-  <img src="{{ .JSON.String "image" }}" alt="Daily Chess Puzzle" style="max-height:auto; border-radius: 3px;">
+  <img src="{{ .JSON.String "image" }}" alt="Daily Chess Puzzle" style="display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: 3px;">
 </div>
