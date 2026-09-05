@@ -1,0 +1,65 @@
+{{ $indicator := .JSON.String "status.indicator" }}
+{{ $components := .JSON.Array "components" }}
+
+<div>
+  <div class="flex items-center gap-15 margin-bottom-15">
+    <div class="grow min-width-0">
+      <a class="size-h3 color-highlight text-truncate block" href="https://status.claude.com/" target="_blank" rel="noreferrer">Claude Status</a>
+      <ul class="list-horizontal-text">
+        {{ if eq $indicator "none" }}<li class="color-positive">All Systems Operational</li>
+        {{ else if eq $indicator "minor" }}<li class="color-highlight">Minor Issues</li>
+        {{ else if eq $indicator "major" }}<li class="color-negative">Major Outage</li>
+        {{ else if eq $indicator "critical" }}<li class="color-negative">Critical Issues</li>
+        {{ else }}<li>{{ .JSON.String "status.description" }}</li>{{ end }}
+      </ul>
+    </div>
+  </div>
+
+  <ul class="list list-gap-8">
+    {{ range $group := $components }}
+      {{ if and ($group.Bool "group") (eq ($group.String "group_id") "") }}
+        <li style="margin-top: 0.75rem;">
+          <div class="size-h5" style="margin-bottom: 0.5rem;">{{ $group.String "name" }}</div>
+          <ul class="list list-gap-8">
+            {{ range $component := $components }}
+              {{ if eq ($component.String "group_id") ($group.String "id") }}
+                {{ template "component-claude-status-components" $component }}
+              {{ end }}
+            {{ end }}
+          </ul>
+        </li>
+      {{ end }}
+    {{ end }}
+    {{ range $component := $components }}
+      {{ if and (not ($component.Bool "group")) (eq ($component.String "group_id") "") }}
+        {{ template "component-claude-status-components" $component }}
+      {{ end }}
+    {{ end }}
+  </ul>
+</div>
+
+{{ define "component-claude-status-components" }}
+  {{ $status := .String "status" }}
+  {{ $hiddenWhenHealthy := and (.Bool "only_show_if_degraded") (eq $status "operational") }}
+  {{ if not $hiddenWhenHealthy }}
+    <li class="flex items-center gap-10">
+      <span style="width: 0.5rem; height: 0.5rem; border-radius: 50%; flex: 0 0 auto;
+        {{ if eq $status "operational" }}background-color: var(--color-positive);
+        {{ else if eq $status "degraded_performance" }}background-color: var(--color-highlight);
+        {{ else if eq $status "under_maintenance" }}background-color: var(--color-text-subdue);
+        {{ else }}background-color: var(--color-negative);{{ end }}"></span>
+      <span class="size-h6">{{ .String "name" }}</span>
+      <span class="size-h6 color-subdue" style="margin-left: auto;">
+        {{ if eq $status "operational" }}Operational
+        {{ else if eq $status "degraded_performance" }}Degraded
+        {{ else if eq $status "partial_outage" }}Partial Outage
+        {{ else if eq $status "major_outage" }}Major Outage
+        {{ else if eq $status "under_maintenance" }}Maintenance
+        {{ else }}{{ $status }}{{ end }}
+      </span>
+    </li>
+  {{ end }}
+{{ end }}
+
+required: |
+  url: https://status.claude.com/api/v2/summary.json
