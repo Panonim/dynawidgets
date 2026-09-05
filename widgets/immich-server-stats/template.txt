@@ -1,0 +1,69 @@
+{{ $photos := .JSON.Int "photos" }}
+{{ $videos := .JSON.Int "videos" }}
+{{ $usageGiB := div (toFloat (.JSON.Int "usage")) 1073741824.0 }}
+{{ $usageDisplayGiB := div (toFloat (toInt (add (mul $usageGiB 10.0) 0.5))) 10.0 }}
+{{ $storage := .Subrequest "storage" }}
+{{ $storageOK := and (ge $storage.Response.StatusCode 200) (le $storage.Response.StatusCode 299) }}
+{{ $totalGiB := 0.0 }}
+{{ $diskUsedGiB := 0.0 }}
+{{ $diskUsedDisplayGiB := 0.0 }}
+{{ $otherUsageGiB := 0.0 }}
+{{ $percentage := 0.0 }}
+
+{{ if $storageOK }}
+  {{ $totalGiB = div (toFloat ($storage.JSON.Int "diskSizeRaw")) 1073741824.0 }}
+  {{ $diskUsedGiB = div (toFloat ($storage.JSON.Int "diskUseRaw")) 1073741824.0 }}
+  {{ $diskUsedDisplayGiB = div (toFloat (toInt (add (mul $diskUsedGiB 10.0) 0.5))) 10.0 }}
+  {{ $otherUsageGiB = sub $diskUsedDisplayGiB $usageDisplayGiB }}
+  {{ $percentage = $storage.JSON.Float "diskUsagePercentage" }}
+{{ end }}
+
+<div style="display: grid; gap: 1rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: 0.75rem;">
+    <div style="background-color: var(--color-widget-background-highlight); border-radius: var(--border-radius); padding: 1rem;">
+      <div class="size-h6 color-subdue">PHOTOS</div>
+      <div class="size-h3 color-highlight">{{ $photos | formatNumber }}</div>
+    </div>
+    <div style="background-color: var(--color-widget-background-highlight); border-radius: var(--border-radius); padding: 1rem;">
+      <div class="size-h6 color-subdue">VIDEOS</div>
+      <div class="size-h3 color-highlight">{{ $videos | formatNumber }}</div>
+    </div>
+    <div style="background-color: var(--color-widget-background-highlight); border-radius: var(--border-radius); padding: 1rem;">
+      <div class="size-h6 color-subdue">USED STORAGE</div>
+      <div class="size-h3 color-highlight">{{ printf "%.1f" $usageDisplayGiB }} GiB</div>
+    </div>
+    <div style="background-color: var(--color-widget-background-highlight); border-radius: var(--border-radius); padding: 1rem;">
+      <div class="size-h6 color-subdue">OTHER DISK USE</div>
+      <div class="size-h3 color-highlight">
+        {{ if $storageOK }}{{ printf "%.1f" $otherUsageGiB }} GiB{{ else }}Unavailable{{ end }}
+      </div>
+    </div>
+  </div>
+
+  {{ if $storageOK }}
+    <div>
+      <div class="flex justify-between items-center" style="margin-bottom: 0.5rem;">
+        <span class="size-h5">Server disk</span>
+        <span class="size-h6 color-subdue">{{ printf "%.1f" $diskUsedDisplayGiB }} GiB used of {{ printf "%.1f" $totalGiB }} GiB</span>
+      </div>
+      {{ $barWidth := printf "%.1f%%" $percentage }}
+      <div style="width: 100%; height: 0.75rem; overflow: hidden; border-radius: var(--border-radius); background-color: var(--color-widget-background-highlight);">
+        <div style="width: {{ $barWidth | safeCSS }}; height: 100%; background-color: var(--color-primary);"></div>
+      </div>
+      <div class="size-h6 color-subdue" style="margin-top: 0.25rem;">{{ printf "%.1f" $percentage }}% used</div>
+    </div>
+  {{ else }}
+    <p class="color-negative">Storage capacity is unavailable. Check the API key permissions for <code>/api/server/storage</code>.</p>
+  {{ end }}
+</div>
+
+required: |
+  # Supply these values in the widget configuration.
+  url: ${IMMICH_URL}/api/server/statistics
+  headers:
+    x-api-key: ${IMMICH_API_KEY}
+  subrequests:
+    storage:
+      url: ${IMMICH_URL}/api/server/storage
+      headers:
+        x-api-key: ${IMMICH_API_KEY}
