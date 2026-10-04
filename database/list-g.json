@@ -1,0 +1,9 @@
+[
+  {
+    "title": "GitHub Status with Components",
+    "description": "Displays GitHub service health and the status of its public components.",
+    "author": "M1XZG",
+    "slug": "github-status-components",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/github-status-components/template.txt"
+  }
+]
