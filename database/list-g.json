@@ -1,5 +1,12 @@
 [
   {
+    "title": "GitHub Issues & PRs",
+    "description": "An easy way to look at your Github Issues and PRs in your dashboard",
+    "author": "Panonim",
+    "slug": "github-pr-issues",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/github-pr-issues/template.txt"
+  },
+  {
     "title": "GitHub Status with Components",
     "description": "Displays GitHub service health and the status of its public components.",
     "author": "M1XZG",

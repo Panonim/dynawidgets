@@ -24,6 +24,8 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
   - Author: jshields-ca
 
 ## G
+- [**GitHub Issues & PRs**](widgets/github-pr-issues/widget.md) — An easy way to look at your Github Issues and PRs in your dashboard
+  - Author: Panonim
 - [**GitHub Status with Components**](widgets/github-status-components/widget.md) — Displays GitHub service health and the status of its public components.
   - Author: M1XZG
 
