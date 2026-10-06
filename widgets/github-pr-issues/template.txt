@@ -2,60 +2,61 @@
 {{ $limit := .Options.IntOr "limit" 8 }}
 {{ $state := .Options.StringOr "state" "open" }}
 {{ $showIcons := .Options.BoolOr "show-icons" true }}
-{{ $query := printf "repo:%s" $repo }}
-
+{{ $collapseAfter := .Options.IntOr "collapse-after" 3 }}
+{{ $query := printf "repo:%s" $repo }
 {{ if eq $state "open" }}{{ $query = printf "%s is:open" $query }}{{ end }}
-{{ if eq $state "closed" }}{{ $query = printf "%s is:closed" $query }}{{ end }}
-
-{{ $response := newRequest "https://api.github.com/search/issues" | withParameter "q" $query | withParameter "sort" "updated" | withParameter "order" "desc" | withParameter "per_page" (printf "%d" $limit) | withHeader "Accept" "application/vnd.github+json" | withHeader "User-Agent" "Dynacat" | getResponse }}
-
+{{ if eq $state "closed" }}{{ $query = printf "%s is:closed" $query }}{{ end }
+{{ $response := newRequest "https://api.github.com/search/issues" | withParameter "q" $query | withParameter "sort" "updated" | withParameter "order" "desc" | withParameter "per_page" (printf "%d" $limit) | withHeader "Accept" "application/vnd.github+json" | withHeader "User-Agent" "Dynacat" | getResponse }
 {{ if eq $response.Response.StatusCode 200 }}
-  {{ range $response.JSON.Array "items" }}
-    {{ $description := .String "body" }}
-    {{ $description = replaceMatches "```[^`]*```" "" $description }}
-    {{ $description = replaceMatches "`([^`]*)`" "$1" $description }}
-    {{ $description = replaceMatches "\\[([^]]+)\\]\\([^)]*\\)" "$1" $description }}
-    {{ $description = replaceMatches "<[^>]+>" "" $description }}
-    {{ $description = replaceMatches "^#{1,6}[[:space:]]*" "" $description }}
-    {{ $description = replaceMatches "\\*\\*([^*]+)\\*\\*" "$1" $description }}
-    {{ $description = replaceMatches "__([^_]+)__" "$1" $description }}
-    {{ $description = replaceMatches "[[:space:]]+" " " $description }}
-    {{ $description = trimSpace $description }}
-
-    <div style="margin-bottom:14px">
-      <a href="{{ .String "html_url" }}" target="_blank" rel="noreferrer" class="size-h4">
-    {{ if $showIcons }}
-      {{ if .Exists "pull_request" }}
-        <span class="color-positive" style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:5px;">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="display:block">
-            <path fill="currentColor" fill-rule="evenodd" d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/>
-          </svg>
-        </span>
-      {{ else }}
-        <span class="color-highlight" style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:5px;">
-          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="display:block">
-            <path fill="currentColor" d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3ZM8 0a8 8 0 100 16A8 8 0 008 0ZM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0Z"/>
-          </svg>
-        </span>
-      {{ end }}
+  <ul class="list list-gap-10 collapsible-container" data-collapse-after="{{ $collapseAfter }}">
+    {{ range $response.JSON.Array "items" }}
+      {{ $description := .String "body" }}
+      {{ $description = replaceMatches "```[^`]*```" "" $description }}
+      {{ $description = replaceMatches "`([^`]*)`" "$1" $description }}
+      {{ $description = replaceMatches "\\[([^]]+)\\]\\([^)]*\\)" "$1" $description }}
+      {{ $description = replaceMatches "<[^>]+>" "" $description }}
+      {{ $description = replaceMatches "^#{1,6}[[:space:]]*" "" $description }}
+      {{ $description = replaceMatches "\\*\\*([^*]+)\\*\\*" "$1" $description }}
+      {{ $description = replaceMatches "__([^_]+)__" "$1" $description }}
+      {{ $description = replaceMatches "[[:space:]]+" " " $description }}
+      {{ $description = trimSpace $description }
+      <li>
+        <a href="{{ .String "html_url" }}" target="_blank" rel="noreferrer" class="size-h4">
+          {{ if $showIcons }}
+            {{ if .Exists "pull_request" }}
+              <span class="color-positive" style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:5px;">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="display:block">
+                  <path fill="currentColor" fill-rule="evenodd" d="M7.177 3.073L9.573.677A.25.25 0 0110 .854v4.792a.25.25 0 01-.427.177L7.177 3.427a.25.25 0 010-.354zM3.75 2.5a.75.75 0 100 1.5.75.75 0 000-1.5zm-2.25.75a2.25 2.25 0 113 2.122v5.256a2.251 2.251 0 11-1.5 0V5.372A2.25 2.25 0 011.5 3.25zM11 2.5h-1V4h1a1 1 0 011 1v5.628a2.251 2.251 0 101.5 0V5A2.5 2.5 0 0011 2.5zm1 10.25a.75.75 0 111.5 0 .75.75 0 01-1.5 0zM3.75 12a.75.75 0 100 1.5.75.75 0 000-1.5z"/>
+                </svg>
+              </span>
+            {{ else }}
+              <span class="color-highlight" style="display:inline-flex;align-items:center;vertical-align:middle;margin-right:5px;">
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="display:block">
+                  <path fill="currentColor" d="M8 9.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3ZM8 0a8 8 0 100 16A8 8 0 008 0ZM1.5 8a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0Z"/>
+                </svg>
+              </span>
+            {{ end }}
+          {{ end }
+          <span class="color-subdue">#{{ .Int "number" }}</span>
+          <span class="color-primary">{{ .String "title" }}</span>
+        </a
+        {{ if ne $description "" }}
+          <div class="size-h6 color-subdue" style="margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
+            {{ $description }}
+          </div>
+        {{ end }}
+      </li>
     {{ end }}
-
-        <span class="color-subdue">#{{ .Int "number" }}</span>
-        <span class="color-primary">{{ .String "title" }}</span>
-      </a>
-
-      {{ if ne $description "" }}
-        <div class="size-h6 color-subdue" style="margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
-          {{ $description }}
-        </div>
-      {{ end }}
-    </div>
-  {{ end }}
+  </ul>
 {{ else }}
-  <div class="color-negative">GitHub API error: {{ $response.Response.Status }}</div>
+  <div class="color-negative">
+    GitHub API error: {{ $response.Response.Status }}
+  </div>
 {{ end }}
-
-{{ $attribution := .Options.StringOr "attribution" "" }}
-{{ if ne $attribution "" }}
-  <a href="{{ $attribution }}" target="_blank" rel="noreferrer" class="size-h6 color-subdue">GitHub</a>
-{{ end }}
+        
+            {{ $attribution := .Options.StringOr "attribution" "" }}
+            {{ if ne $attribution "" }}
+              <a href="{{ $attribution }}" target="_blank" rel="noreferrer" class="size-h6 color-subdue">
+                GitHub
+              </a>
+            {{ end }}

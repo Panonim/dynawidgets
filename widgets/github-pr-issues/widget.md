@@ -16,6 +16,7 @@
             show-icons: true
             state: open
             limit: 8
+            collapse-after: 3
 ```
 
 For the GitHub Issues Search API, the `state` values available for the widget are: `closed`, `open`, `all`.
