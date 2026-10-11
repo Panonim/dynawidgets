@@ -1,0 +1,55 @@
+<!-- We create one unordered list -->
+<ul class="list list-gap-20 list-with-separator collapsible-container" data-collapse-after="6">
+{{ $clients := .JSON.Array "" }}
+  {{ range $client := $clients }}
+    <!-- For each iterated element, we create one list item -->
+    <div class="monitor-site flex items-center gap-15">
+      <div class="grow min-width-0">
+        <span class="size-h4 color-highlight">{{ $client.String "name" }}</span>
+
+        {{ if $client.String "latestHandshakeAt" }}
+        <!-- Evaluate if latestHandshakeAt have a value -->
+
+          <!-- We print the IP and time for the latest Handshake -->
+          {{ $last_client_handshake := parseRelativeTime "2006-01-02T15:04:05.000Z" ($client.String "latestHandshakeAt") }}
+          <div class="text-truncate">{{ $client.String "ipv4Address" }} • 🤝🏻 <span {{ $last_client_handshake }} ></span> ago </div>
+          <!-- ----------------------------------------- -->
+            
+        {{ else }}
+          <!-- We print the IP and give the client offline status -->
+          <div class="text-truncate">{{ $client.String "ipv4Address" }} • Offline </div>
+        {{ end }}
+
+      </div>
+
+      {{ if $client.String "latestHandshakeAt" }}
+        <!-- Evaluate if latestHandshakeAt have a value -->
+
+        {{ $last_client_handshake := parseTime "2006-01-02T15:04:05.000Z" ($client.String "latestHandshakeAt") }}
+        {{ $fifteenMinutesAgo := offsetNow "-15m" }}
+
+        {{ if $last_client_handshake.Before $fifteenMinutesAgo }}
+          <!-- If 15 minutes has passed, we give it a red icon -->
+          <div class="monitor-site-status-icon">🔴</div>
+        {{ else }}
+          <!-- If within 15 minutes, we give it a green icon-->
+          <div class="monitor-site-status-icon">🟢</div>
+        {{ end }}
+
+      {{ else }}
+        <!-- No handshake value, we give it a red icon -->
+        <div class="monitor-site-status-icon">🔴</div>
+      {{ end }}
+
+    </div>
+
+{{ end }}
+</ul>
+
+required: |
+  url: ${WG-EASY_URL}/api/client
+  method: GET
+  body-type: json
+  headers:
+    Authorization: Token ${WG-EASY_KEY}
+    Accept: application/json
