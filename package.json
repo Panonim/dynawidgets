@@ -14,11 +14,14 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=26"
+  },
   "bugs": {
     "url": "https://github.com/Panonim/dynawidgets/issues"
   },
   "homepage": "https://github.com/Panonim/dynawidgets#readme",
   "dependencies": {
-    "js-yaml": "^4.1.1"
+    "js-yaml": "^5.5.0"
   }
 }
