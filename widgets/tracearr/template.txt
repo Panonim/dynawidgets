@@ -1,0 +1,62 @@
+{{ define "tracearr-dur" -}}
+{{- $s := div . 1000 -}}
+{{- if ge $s 3600 -}}
+{{- printf "%d:%02d:%02d" (div $s 3600) (mod (div $s 60) 60) (mod $s 60) -}}
+{{- else -}}
+{{- printf "%d:%02d" (div $s 60) (mod $s 60) -}}
+{{- end -}}
+{{- end -}}
+<div class="flex justify-between text-center">
+    <div>
+        <div class="{{ if gt (.JSON.Int "summary.total") 0 }}color-positive{{ else }}color-highlight{{ end }} size-h3">{{ .JSON.Int "summary.total" }}</div>
+        <div class="size-h6{{ if gt (.JSON.Int "summary.total") 0 }} color-positive{{ end }}">STREAMS</div>
+    </div>
+    <div>
+        <div class="color-highlight size-h3">{{ .JSON.Int "summary.transcodes" }}</div>
+        <div class="size-h6">TRANSCODES</div>
+    </div>
+    <div>
+        <div class="color-highlight size-h3">{{ .JSON.Int "summary.direct_plays" }}</div>
+        <div class="size-h6">DIRECT PLAY</div>
+    </div>
+    <div>
+        <div class="color-highlight size-h3">{{ .JSON.String "summary.total_bitrate" }}</div>
+        <div class="size-h6">BITRATE</div>
+    </div>
+</div>
+
+{{ $sessions := .JSON.Array "data" }}{{ if $sessions }}
+<div class="margin-top-10">
+    {{ range $i, $session := $sessions }}
+    <div{{ if gt $i 0 }} class="margin-top-10"{{ end }}>
+        <div class="margin-top-5 text-truncate">
+            {{- if and (eq ($session.String "media_type") "episode") ($session.String "show_title") -}}
+            <span class="size-p color-highlight">{{ $session.String "show_title" }}: S{{ printf "%02d" ($session.Int "season_number") }} · E{{ printf "%02d" ($session.Int "episode_number") }} - {{ $session.String "media_title" }}</span>
+            {{- else -}}
+            <span class="size-p color-highlight">{{ $session.String "media_title" }}</span>
+            {{- end -}}
+            {{- if $session.String "username" }} <span class="size-h6 color-positive">({{ $session.String "username" }})</span>{{ end -}}
+        </div>
+        <div class="margin-top-5 flex justify-between">
+            <span class="size-h6 color-subdue">{{ template "tracearr-dur" ($session.Int "progress_ms") }} / {{ template "tracearr-dur" ($session.Int "duration_ms") }}</span>
+            {{ if or ($session.String "video_decision") ($session.String "audio_decision") }}
+            {{- if or (eq ($session.String "video_decision") "transcode") (eq ($session.String "audio_decision") "transcode") -}}
+            <span class="size-h6 color-negative">Transcode</span>
+            {{- else if or (eq ($session.String "video_decision") "copy") (eq ($session.String "audio_decision") "copy") -}}
+            <span class="size-h6 color-subdue">Copy</span>
+            {{- else -}}
+            <span class="size-h6 color-positive">Direct Play</span>
+            {{- end -}}
+            {{ end }}
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{ else }}
+<div class="text-center margin-top-10">
+    <span class="size-h6 color-subdue">No active sessions</span>
+</div>
+{{ end }}
+
+required: |
+  url: ${TRACEARR_URL}/api/v2/public/streams
