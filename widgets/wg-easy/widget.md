@@ -1,14 +1,13 @@
 # WG-EASY Dashboard
 This widget displays a list of all wg-easy clients and their respective status.
 
-<img width="320" height="320" alt="image" src="https://github.com/user-attachments/assets/87a538f5-8deb-4f8a-bb7f-0b34cc94fe0e" />
-
+<img width="314" height="313" alt="image" src="https://github.com/user-attachments/assets/dc21ddb0-2f03-49e1-9f1f-64c4f3232ca9" />
 
 ### How the widget works?
 Wireguard is a stateless protocol and we can only evaluate connections by checking the time of the recent handshake.
 The implementation determines the connection status by checking the following:
  - Handshake made within the last 15 minutes, the connection is considered active 🟢
- - Handshake longer than 15 minutes ago, the connection is considered inactive 🟢
+ - Handshake longer than 15 minutes ago, the connection is considered inactive 🔴
  - Handshake never made, i.e, handshake=null, we consider it inactive 🔴
 
 ### Configuration
@@ -22,8 +21,8 @@ Hardcoded value for data-collapse, which is currently 6, i.e, when the list of c
   title: wg-easy clients
 ```
 ## Environment Variables
- - WG-EASY_URL - The URL to your wg-easy web page 
- - WG-EASY_KEY - The base64 encoding of username:password
+ - WG_EASY_URL - The URL to your wg-easy web page 
+ - WG_EASY_KEY - The base64 encoding of username:password
 
 ###### Terminal command to generate key with your current username and password:
 ``` 

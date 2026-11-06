@@ -47,9 +47,9 @@
 </ul>
 
 required: |
-  url: ${WG-EASY_URL}/api/client
+  url: ${WG_EASY_URL}/api/client
   method: GET
   body-type: json
   headers:
-    Authorization: Token ${WG-EASY_KEY}
+    Authorization: Basic ${WG_EASY_KEY}
     Accept: application/json
