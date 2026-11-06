@@ -48,6 +48,8 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 ## T
 - [**Todoist**](widgets/todoist/widget.md) — A single consolidated custom-api widget for Dynacat that displays your Todoist productivity data at a glance.
   - Author: jshields-ca
+- [**Tracearr**](widgets/tracearr/widget.md) — Live streaming stats from Tracearr - active streams, transcodes, direct plays, total bitrate, and per-session progress with playback decision.
+  - Author: Bbocks
 
 ## U
 - [**Uptime Kuma**](widgets/uptime-kuma/widget.md) — Clean widget for viewing your uptime kuma stats

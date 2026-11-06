@@ -5,5 +5,12 @@
     "author": "jshields-ca",
     "slug": "todoist",
     "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/todoist/template.txt"
+  },
+  {
+    "title": "Tracearr",
+    "description": "Live streaming stats from Tracearr - active streams, transcodes, direct plays, total bitrate, and per-session progress with playback decision.",
+    "author": "Bbocks",
+    "slug": "tracearr",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/tracearr/template.txt"
   }
 ]
