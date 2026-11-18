@@ -1,0 +1,151 @@
+{{ define "silo-rate" -}}
+{{- if ge . 1000 -}}{{ printf "%.1f" (div (toFloat .) 1000.0) }} Mbps{{- else -}}{{ . }} kbps{{- end -}}
+{{- end -}}
+{{ define "silo-clock" -}}
+{{- if ge . 3600 -}}{{ printf "%d:%02d:%02d" (div . 3600) (mod (div . 60) 60) (mod . 60) }}{{- else -}}{{ printf "%d:%02d" (div . 60) (mod . 60) }}{{- end -}}
+{{- end -}}
+{{ $req := .Response.Request.URL }}
+{{ $base := printf "%s://%s" $req.Scheme $req.Host }}
+{{ $link := .Options.StringOr "public-url" $base }}
+{{ $sessions := .JSON.Array "items" }}
+{{ $streams := 0 }}{{ $transcodes := 0 }}{{ $bandwidth := 0 }}
+{{ range $sessions }}
+  {{ $streams = add $streams 1 }}
+  {{ if eq (.String "effective_play_method") "transcode" }}{{ $transcodes = add $transcodes 1 }}{{ end }}
+  {{ $kbps := .Int "stream_bitrate_kbps" }}{{ if eq $kbps 0 }}{{ $kbps = .Int "target_bitrate_kbps" }}{{ end }}{{ if eq $kbps 0 }}{{ $kbps = .Int "source_bitrate_kbps" }}{{ end }}
+  {{ $bandwidth = add $bandwidth $kbps }}
+{{ end }}
+{{ $tp := .Subrequest "throughput" }}
+{{ $hours := $tp.Response.Request.URL.Query.Get "hours" }}{{ if eq $hours "" }}{{ $hours = "24" }}{{ end }}
+<div class="text-center" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 1rem;">
+  <div>
+    <div class="size-h3 {{ if gt $streams 0 }}color-positive{{ else }}color-highlight{{ end }}">{{ $streams }}</div>
+    <div class="size-h6">STREAMS</div>
+  </div>
+  <div>
+    <div class="size-h3 {{ if gt $transcodes 0 }}color-negative{{ else }}color-highlight{{ end }}">{{ $transcodes }}</div>
+    <div class="size-h6">TRANSCODES</div>
+  </div>
+  <div>
+    <div class="size-h3 color-highlight">{{ template "silo-rate" $bandwidth }}</div>
+    <div class="size-h6">BANDWIDTH</div>
+  </div>
+  <div>
+    <div class="size-h3 color-highlight">{{ formatBytes ($tp.JSON.Int "egress_bytes") }}</div>
+    <div class="size-h6">SERVED {{ $hours }}H</div>
+  </div>
+</div>
+
+{{ $points := $tp.JSON.Array "points" }}
+{{ if $points }}
+{{ $peak := 0 }}{{ range $points }}{{ if gt (.Int "egress_kbps") $peak }}{{ $peak = .Int "egress_kbps" }}{{ end }}{{ end }}
+<div class="margin-top-15">
+  <div class="flex justify-between size-h6 color-subdue">
+    <span>Throughput, last {{ $hours }}h</span>
+    <span>Peak {{ template "silo-rate" $peak }}</span>
+  </div>
+  <div style="display: flex; align-items: flex-end; gap: 1px; height: 3.5rem; margin-top: 0.5rem; border-bottom: 1px solid var(--color-separator);">
+    {{ range $points }}
+    {{ $kbps := .Int "egress_kbps" }}
+    <div title="{{ template "silo-rate" $kbps }}, {{ .Int "streams" }} streams" style="flex: 1; min-width: 1px; height: {{ if gt $peak 0 }}{{ div (mul $kbps 100) $peak }}{{ else }}0{{ end }}%; background: var(--color-primary); opacity: 0.75; border-radius: 1px 1px 0 0;"></div>
+    {{ end }}
+  </div>
+</div>
+{{ end }}
+
+{{ if $sessions }}
+<ul class="list list-gap-14 margin-top-15">
+  {{ range $sessions }}
+  {{ $method := .String "effective_play_method" }}{{ if eq $method "" }}{{ $method = .String "play_method" }}{{ end }}
+  {{ $kbps := .Int "stream_bitrate_kbps" }}{{ if eq $kbps 0 }}{{ $kbps = .Int "target_bitrate_kbps" }}{{ end }}{{ if eq $kbps 0 }}{{ $kbps = .Int "source_bitrate_kbps" }}{{ end }}
+  {{ $pos := toInt (.Float "position_seconds") }}{{ $dur := .Int "file_duration" }}
+  <li style="display: flex; gap: 1rem; align-items: center;">
+    {{ if .String "poster_url" }}
+    {{ $poster := .String "poster_url" }}{{ if not (findMatch "^https?://" $poster) }}{{ $poster = concat $base $poster }}{{ end }}
+    <img src="{{ $poster }}" alt="" loading="lazy" style="width: 2.8rem; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--border-radius); flex-shrink: 0;">
+    {{ end }}
+    <div style="flex: 1; min-width: 0;">
+      <div class="text-truncate color-highlight">
+        {{- if eq (.String "media_type") "episode" -}}
+        {{ .String "series_name" }} · S{{ printf "%02d" (.Int "season_number") }}E{{ printf "%02d" (.Int "episode_number") }}{{ if .String "episode_name" }} · {{ .String "episode_name" }}{{ end }}
+        {{- else -}}
+        {{ .String "media_title" }}
+        {{- end -}}
+      </div>
+      <div class="flex justify-between size-h6" style="gap: 0.5rem;">
+        <span class="text-truncate">
+          {{- if .Bool "is_paused" }}<span class="color-subdue">Paused · </span>{{ end -}}
+          {{ .String "username" }}{{ if and (.String "profile_name") (ne (.String "profile_name") (.String "username")) }} ({{ .String "profile_name" }}){{ end }}
+          {{- if .String "client_name" }}<span class="color-subdue"> · {{ .String "client_name" }}</span>{{ end -}}
+        </span>
+        <span style="flex-shrink: 0;">
+          {{- if gt $kbps 0 }}<span class="color-subdue">{{ template "silo-rate" $kbps }} · </span>{{ end -}}
+          {{- if eq $method "transcode" -}}<span class="color-negative">Transcode</span>
+          {{- else if eq $method "direct" -}}<span class="color-positive">Direct Play</span>
+          {{- else if eq $method "direct_stream" -}}<span class="color-primary">Direct Stream</span>
+          {{- else if eq $method "remux" -}}<span class="color-primary">Remux</span>
+          {{- else if $method -}}<span class="color-subdue">{{ $method }}</span>
+          {{- end -}}
+        </span>
+      </div>
+      {{ if gt $dur 0 }}
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-top: 0.4rem;">
+        <div style="flex: 1; height: 3px; border-radius: 3px; background: var(--color-separator); overflow: hidden;">
+          <div style="height: 100%; width: {{ div (mul $pos 100) $dur }}%; background: var(--color-primary);"></div>
+        </div>
+        <span class="size-h6 color-subdue" style="flex-shrink: 0;">{{ template "silo-clock" $pos }} / {{ template "silo-clock" $dur }}</span>
+      </div>
+      {{ end }}
+    </div>
+  </li>
+  {{ end }}
+</ul>
+{{ else }}
+<div class="text-center size-h6 color-subdue margin-top-15">Nothing is playing</div>
+{{ end }}
+
+{{ $recent := (.Subrequest "recent").JSON.Array "items" }}
+{{ if $recent }}
+<div class="size-h6 color-subdue margin-top-20">RECENTLY ADDED</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 1rem; margin-top: 0.75rem;">
+  {{ range $recent }}
+  <a href="{{ $link }}/item/{{ .String "content_id" }}" target="_blank" rel="noreferrer" style="min-width: 0;" title="{{ .String "title" }}">
+    {{ $poster := .String "poster_url" }}
+    {{ if $poster }}
+    {{ if not (findMatch "^https?://" $poster) }}{{ $poster = concat $base $poster }}{{ end }}
+    <img src="{{ $poster }}" alt="" loading="lazy" style="width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--border-radius);">
+    {{ else }}
+    <div style="width: 100%; aspect-ratio: 2 / 3; border-radius: var(--border-radius); background: var(--color-widget-background-highlight);"></div>
+    {{ end }}
+    <div class="size-h6 color-highlight text-truncate margin-top-5">
+      {{- if eq (.String "type") "episode" }}{{ .String "series_title" }}{{ else }}{{ .String "title" }}{{ end -}}
+    </div>
+    <div class="size-h6 color-subdue text-truncate">
+      {{- if eq (.String "type") "episode" }}S{{ printf "%02d" (.Int "season_number") }}E{{ printf "%02d" (.Int "episode_number") }} · {{ end -}}
+      <span {{ toRelativeTime (parseTime "rfc3339" (.String "added_at")) }}></span>
+    </div>
+  </a>
+  {{ end }}
+</div>
+{{ end }}
+
+required: |
+  url: ${SILO_URL}/api/v2/admin/sessions
+  subrequests:
+    throughput:
+      url: ${SILO_URL}/api/v2/admin/stats/timeseries
+      headers:
+        Authorization: Bearer ${SILO_API_KEY}
+      parameters:
+        hours: 6
+    recent:
+      url: ${SILO_URL}/api/v2/catalog
+      headers:
+        Authorization: Bearer ${SILO_API_KEY}
+        X-Profile-Id: ${SILO_PROFILE_ID}
+      parameters:
+        type: video
+        sort: -added_at
+        limit: 8
+        skip_total: true
+        image_size: small
