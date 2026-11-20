@@ -17,7 +17,7 @@
    {{ end }}
    <li class="flex items-center gap-20">
        <div class="shrink-0">
-           <img class="docker-container-icon" src="{{ $.Options.StringOr "icon_url" "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/caddy.svg" }}" alt="" loading="lazy">
+           <img class="docker-container-icon" src="{{ secureImageURL ($.Options.StringOr "icon_url" "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/caddy.svg") }}" alt="" loading="lazy">
        </div>
        <div class="min-width-0 grow">
          <a href='https://{{ $host }}' class="color-highlight size-title-dynamic block text-truncate" target="_blank" rel="noreferrer">{{ $host | trimSuffix ($.Options.StringOr "domain_name" ".example.com") }}</a>

@@ -1,1 +1,1 @@
-<img src="{{ .JSON.String "message" }}"></img>
+<img src="{{ secureImageURL (.JSON.String "message") }}"></img>
