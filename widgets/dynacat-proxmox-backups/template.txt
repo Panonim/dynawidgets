@@ -94,7 +94,7 @@
         {{ $consoleUrl := printf "${PROXMOX_WEB_URL}/#v1:0:=%s%%2F%s:4:=jsconsole::::8:21:21" $subtype $vmid }}
         <a class="row-dynacat-proxmox-backups" href="{{ $consoleUrl }}" target="_blank" rel="noreferrer">
           <div class="row-main-dynacat-proxmox-backups">
-            {{ if ne $iconUrl "" }}<img class="row-icon-dynacat-proxmox-backups" src="{{ $iconUrl }}" alt="">{{ end }}
+            {{ if ne $iconUrl "" }}<img class="row-icon-dynacat-proxmox-backups" src="{{ secureImageURL $iconUrl }}" alt="">{{ end }}
             <div>
               <div class="size-h5 color-highlight">{{ $displayName }}</div>
               <div class="size-h6 color-subdue">{{ if eq $subtype "qemu" }}VM{{ else }}LXC{{ end }} {{ $vmid }}</div>
