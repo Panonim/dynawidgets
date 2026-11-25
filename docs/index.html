@@ -230,6 +230,133 @@
       fill: currentColor;
     }
 
+    .topnav {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .topnav a {
+      padding: 10px 16px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .topnav a:hover {
+      color: var(--text);
+    }
+
+    .topnav a.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .intro {
+      margin: -8px 0 8px;
+      max-width: 860px;
+      color: var(--text-muted);
+    }
+
+    .intro a {
+      color: #c49bd8;
+    }
+
+    .intro code,
+    .fix-note code {
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--surface-hover);
+      border: 1px solid var(--border);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88em;
+      word-break: break-all;
+    }
+
+    #fixInput,
+    #fixOutput,
+    .diff-line {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    #fixOutput {
+      min-height: 160px;
+    }
+
+    #fixOutput:empty::before {
+      content: "The fixed widget will appear here once you paste one.";
+      color: var(--text-faint);
+      font-family: "Work Sans", Arial, sans-serif;
+      font-size: 15px;
+    }
+
+    .fix-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .fix-list > li + li {
+      border-top: 1px solid var(--border);
+    }
+
+    .diff-line {
+      display: flex;
+      gap: 12px;
+      padding: 8px 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .diff-line .sign {
+      flex: none;
+      width: 10px;
+      color: var(--text-faint);
+      user-select: none;
+    }
+
+    .diff-line.removed {
+      background: rgba(248, 113, 113, 0.07);
+      color: #fca5a5;
+    }
+
+    .diff-line.added {
+      background: rgba(74, 222, 128, 0.07);
+      color: #86efac;
+    }
+
+    .fix-note {
+      display: flex;
+      gap: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+    }
+
+    .fix-note .icon {
+      flex: none;
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 18px;
+      text-align: center;
+    }
+
     /* Scrollbar styling */
     * {
       scrollbar-width: thin;
@@ -286,6 +413,12 @@
 </head>
 <body>
   <div class="container">
+    <nav class="topnav" aria-label="Sections">
+      <a href="#converter" data-view="converter">Converter</a>
+      <a href="#fix" data-view="fix">Widget Fixer</a>
+    </nav>
+
+    <section id="view-converter">
     <h1>Dynacat Custom-api Widget Converter</h1>
 
     <div class="grid">
@@ -375,6 +508,50 @@
         </div>
       </div>
     </div>
+    </section>
+
+    <section id="view-fix" hidden>
+      <h1>Widget Fixer for 3.0.3</h1>
+      <p class="intro">
+        Paste a <code>custom-api</code> widget, a <code>dynawidgets</code> widget or a <code>template.txt</code>.
+        Image URLs are wrapped in <code>secureImageURL</code> and anything that can't be fixed automatically is listed below.
+        Everything runs in your browser, nothing is uploaded.
+      </p>
+
+      <div class="grid">
+        <div>
+          <div class="block">
+            <strong>Your widget</strong>
+            <textarea id="fixInput" spellcheck="false" placeholder="Paste your widget YAML or template.txt here"></textarea>
+          </div>
+        </div>
+
+        <div>
+          <div class="block output-block">
+            <strong>Fixed widget</strong>
+            <div class="code-container">
+              <button class="copy-icon" onclick="copyToClipboard('fixOutput', this)" aria-label="Copy fixed widget">
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 8H18V18H8z"/>
+                  <path d="M6 16H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>
+                </svg>
+              </button>
+              <pre id="fixOutput"></pre>
+            </div>
+          </div>
+
+          <div class="block" id="fixChangesBlock" hidden>
+            <strong>Changes made</strong>
+            <ul id="fixChanges" class="fix-list"></ul>
+          </div>
+
+          <div class="block" id="fixWarningsBlock" hidden>
+            <strong>Check manually</strong>
+            <ul id="fixWarnings" class="fix-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <script>
@@ -781,6 +958,297 @@ ${buildEnvVarSection(envVars, schemeVars)}`;
     document.getElementById("author").addEventListener("input", convertWidget);
 
     convertWidget();
+
+    // Template actions are swapped for placeholders so quotes inside {{ }} can't break the HTML regexes.
+    const ACTION_OPEN = "\u0001";
+    const ACTION_CLOSE = "\u0002";
+    const PLACEHOLDER = /\u0001(\d+)\u0002/g;
+
+    function maskActions(text) {
+      const actions = [];
+      let out = "";
+      let i = 0;
+
+      while (i < text.length) {
+        const start = text.indexOf("{{", i);
+        if (start === -1) {
+          out += text.slice(i);
+          break;
+        }
+
+        out += text.slice(i, start);
+        let j = start + 2;
+        let quote = null;
+
+        while (j < text.length) {
+          const c = text[j];
+          if (quote) {
+            if (c === "\\" && quote === '"') {
+              j += 2;
+              continue;
+            }
+            if (c === quote) quote = null;
+            j++;
+            continue;
+          }
+          if (c === '"' || c === "`") {
+            quote = c;
+            j++;
+            continue;
+          }
+          if (c === "}" && text[j + 1] === "}") break;
+          j++;
+        }
+
+        if (j >= text.length) {
+          out += text.slice(start);
+          break;
+        }
+
+        actions.push(text.slice(start, j + 2));
+        out += ACTION_OPEN + (actions.length - 1) + ACTION_CLOSE;
+        i = j + 2;
+      }
+
+      return { masked: out, actions };
+    }
+
+    function unmask(text, actions) {
+      return text.replace(PLACEHOLDER, (_, n) => actions[Number(n)]);
+    }
+
+    function actionInner(action) {
+      return action.replace(/^\{\{-?\s*/, "").replace(/\s*-?\}\}$/, "");
+    }
+
+    function isControlAction(inner) {
+      return /^(?:(?:if|else|end|range|with|define|template|block|break|continue)\b|\/\*)/.test(inner)
+        || /^\$\w*\s*:?=/.test(inner);
+    }
+
+    // safeURL returns template.URL, which secureImageURL won't accept, and the cached URL doesn't need it.
+    function cleanPipeline(inner) {
+      return inner
+        .replace(/\s*\|\s*safeURL\b/g, "")
+        .replace(/^safeURL\s+/, "")
+        .trim();
+    }
+
+    function goString(s) {
+      return '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
+    }
+
+    function isPrivateUrl(rawUrl) {
+      let host;
+      try {
+        host = new URL(rawUrl).hostname.toLowerCase().replace(/^\[|\]$/g, "");
+      } catch {
+        return false;
+      }
+
+      if (host === "localhost" || (!host.includes(".") && !host.includes(":"))) return true;
+      if (/\.(local|lan|home|internal|localdomain|home\.arpa)$/.test(host)) return true;
+
+      const v4 = host.match(/^(\d+)\.(\d+)\.\d+\.\d+$/);
+      if (v4) {
+        const a = Number(v4[1]);
+        const b = Number(v4[2]);
+        return a === 10 || a === 127 || a === 0
+          || (a === 172 && b >= 16 && b <= 31)
+          || (a === 192 && b === 168)
+          || (a === 169 && b === 254);
+      }
+
+      return host === "::1" || /^f[cd][0-9a-f]{2}:/.test(host) || host.startsWith("fe80:");
+    }
+
+    function fixImageSrc(value, fn, actions) {
+      const trimmed = value.trim();
+      const parts = trimmed.split(/(\u0001\d+\u0002)/).filter(p => p !== "");
+      const isPlaceholder = p => /^\u0001\d+\u0002$/.test(p);
+      const original = unmask(trimmed, actions);
+
+      if (parts.length === 0) return {};
+
+      if (!parts.some(isPlaceholder)) {
+        const usesEnv = trimmed.startsWith("${");
+        if (!usesEnv && !/^https?:\/\//i.test(trimmed)) return {};
+        if (!usesEnv && !isPrivateUrl(trimmed)) return {};
+        return { value: `{{ ${fn} ${goString(trimmed)} }}` };
+      }
+
+      if (original.includes("secureImageURL")) return {};
+
+      // Relative paths like /assets/... are served by Dynacat itself and need no change.
+      if (!isPlaceholder(parts[0]) && !/^(?:https?:\/\/|\$\{)/i.test(parts[0])) return {};
+
+      const inners = [];
+      for (const part of parts) {
+        if (!isPlaceholder(part)) continue;
+        const inner = actionInner(actions[Number(part.slice(1, -1))]);
+        if (isControlAction(inner)) {
+          return {
+            warning: `Image source uses template logic (if/range/with/variables) and was left unchanged. Wrap the final URL in ${fn} by hand: `,
+            code: original
+          };
+        }
+        inners.push(cleanPipeline(inner));
+      }
+
+      if (parts.length === 1) {
+        return { value: `{{ ${inners[0]} | ${fn} }}` };
+      }
+
+      let format = "";
+      const args = [];
+      let k = 0;
+      for (const part of parts) {
+        if (isPlaceholder(part)) {
+          format += "%v";
+          const arg = inners[k++];
+          args.push(/^[$.][\w.]*$/.test(arg) ? arg : `(${arg})`);
+        } else {
+          format += part.replace(/%/g, "%%");
+        }
+      }
+
+      return { value: `{{ printf ${goString(format)} ${args.join(" ")} | ${fn} }}` };
+    }
+
+    function fixWidget(input) {
+      const insecure = /^\s*allow-insecure:\s*true\b/m.test(input);
+      const fn = insecure ? "secureImageURLAllowInsecure" : "secureImageURL";
+      const { masked, actions } = maskActions(input);
+      const changes = [];
+      const warnings = [];
+
+      const fixedMasked = masked.replace(/<img\b[^>]*>/gi, tag => {
+        if (/\ssrcset\s*=/i.test(tag) && tag.includes(ACTION_OPEN)) {
+          warnings.push({
+            text: "An image uses srcset with template values. srcset is not rewritten, wrap each URL in it with " + fn + " by hand: ",
+            code: unmask(tag, actions)
+          });
+        }
+
+        return tag.replace(/(\ssrc\s*=\s*)(?:"([^"]*)"|'([^']*)')/i, (match, prefix, dq, sq) => {
+          const quote = dq !== undefined ? '"' : "'";
+          const value = dq !== undefined ? dq : sq;
+          const result = fixImageSrc(value, fn, actions);
+
+          if (result.warning) warnings.push({ text: result.warning, code: result.code });
+          if (!result.value) return match;
+
+          changes.push({ before: unmask(value.trim(), actions), after: result.value });
+          return prefix + quote + result.value + quote;
+        });
+      });
+
+      const output = unmask(fixedMasked, actions);
+
+      if (changes.length > 0 && insecure) {
+        warnings.push({ text: "allow-insecure: true was found, so images use secureImageURLAllowInsecure. Switch to secureImageURL if the image host has a valid certificate." });
+      }
+
+      if (changes.length > 0 && /^\s*headers:/m.test(input)) {
+        warnings.push({ text: "This widget sends headers. Images are fetched without them, so an image host that needs authentication must accept a URL that carries it, such as an API key query parameter." });
+      }
+
+      const secretRefs = [...new Set(input.match(/\$\{(?:secret|readFileFromEnv):[^}]*\}/g) || [])];
+      for (const ref of secretRefs) {
+        warnings.push({
+          text: "This only expands when written into the YAML file by hand. Saved through the UI editor it stays as literal text. Alternatively move the value to .env and reference it as ${NAME}: ",
+          code: ref
+        });
+      }
+
+      const repoMatch = input.match(/^\s*repo:\s*["']?([^"'\s#]+)/m);
+      if (repoMatch && /[\/:.]/.test(repoMatch[1])) {
+        warnings.push({
+          text: "repo must be a branch name of Panonim/dynawidgets. Templates from other repositories or URLs are refused: ",
+          code: repoMatch[0].trim()
+        });
+      }
+
+      const unsafeLinks = masked.match(/href\s*=\s*["']\s*(?:javascript|data|vbscript):[^"']*/gi) || [];
+      for (const link of new Set(unsafeLinks)) {
+        warnings.push({
+          text: "javascript:, data: and vbscript: links may be stripped. Use a normal http(s) link instead: ",
+          code: unmask(link, actions)
+        });
+      }
+
+      return { output, changes, warnings };
+    }
+
+    function renderList(listId, blockId, items, build) {
+      const list = document.getElementById(listId);
+      list.replaceChildren();
+      items.forEach(item => {
+        const li = document.createElement("li");
+        build(li, item);
+        list.appendChild(li);
+      });
+      document.getElementById(blockId).hidden = items.length === 0;
+    }
+
+    function codeEl(text) {
+      const code = document.createElement("code");
+      code.textContent = text;
+      return code;
+    }
+
+    function diffLine(kind, text) {
+      const line = document.createElement("div");
+      line.className = `diff-line ${kind}`;
+      const sign = document.createElement("span");
+      sign.className = "sign";
+      sign.textContent = kind === "removed" ? "-" : "+";
+      const body = document.createElement("span");
+      body.textContent = text;
+      line.append(sign, body);
+      return line;
+    }
+
+    function runFixer() {
+      const input = document.getElementById("fixInput").value;
+      const { output, changes, warnings } = input.trim() === ""
+        ? { output: "", changes: [], warnings: [] }
+        : fixWidget(input);
+
+      document.getElementById("fixOutput").textContent = output;
+
+      renderList("fixChanges", "fixChangesBlock", changes, (li, change) => {
+        li.append(diffLine("removed", change.before), diffLine("added", change.after));
+      });
+
+      renderList("fixWarnings", "fixWarningsBlock", warnings, (li, warning) => {
+        li.className = "fix-note";
+        const icon = document.createElement("span");
+        icon.className = "icon";
+        icon.textContent = "!";
+        const body = document.createElement("div");
+        body.append(document.createTextNode(warning.text));
+        if (warning.code) body.append(codeEl(warning.code));
+        li.append(icon, body);
+      });
+    }
+
+    document.getElementById("fixInput").addEventListener("input", runFixer);
+
+    function showView() {
+      const view = location.hash === "#fix" ? "fix" : "converter";
+
+      ["converter", "fix"].forEach(name => {
+        document.getElementById(`view-${name}`).hidden = view !== name;
+      });
+      document.querySelectorAll(".topnav a").forEach(link => {
+        link.classList.toggle("active", link.dataset.view === view);
+      });
+      window.scrollTo(0, 0);
+    }
+
+    window.addEventListener("hashchange", showView);
+    showView();
   </script>
 </body>
 </html>
