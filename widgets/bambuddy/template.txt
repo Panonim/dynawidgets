@@ -1,0 +1,123 @@
+{{ $list := .Subrequest "printers" }}
+{{ $base := "" }}
+{{ $apiKey := "" }}
+{{ with $list.Response.Request }}
+  {{ $base = replaceMatches "/api/v1/printers/?(\\?.*)?$" "" .URL.String }}
+  {{ $apiKey = .Header.Get "X-API-Key" }}
+{{ end }}
+{{ $showTemps := .Options.BoolOr "show-temperatures" true }}
+{{ $showAMS := .Options.BoolOr "show-ams" true }}
+{{ $showCamera := .Options.BoolOr "show-camera" true }}
+{{ $hideOffline := .Options.BoolOr "hide-offline" false }}
+
+{{ if eq $list.Response.StatusCode 401 403 }}
+<p class="color-negative">Bambuddy rejected the API key ({{ $list.Response.StatusCode }}). Check BAMBUDDY_API_KEY and that the key has the "Read Status" permission.</p>
+{{ else if not ($list.JSON.IsArray) }}
+<p class="color-negative">Unexpected response from Bambuddy. Check BAMBUDDY_URL.</p>
+{{ else if eq (len ($list.JSON.Array "")) 0 }}
+<p class="color-subdue">No printers configured in Bambuddy.</p>
+{{ else }}
+<ul class="list list-gap-14 list-with-separator">
+  {{ range $list.JSON.Array "" }}
+  {{ if .Bool "is_active" }}
+  {{ $req := newRequest (printf "%s/api/v1/printers/%d/status" $base (.Int "id")) }}
+  {{ if ne $apiKey "" }}{{ $req = withHeader "X-API-Key" $apiKey $req }}{{ end }}
+  {{ $s := getResponse $req }}
+  {{ $model := .String "model" }}
+  {{ $connected := $s.JSON.Bool "connected" }}
+  {{ $state := $s.JSON.String "state" }}
+  {{ $active := or (eq $state "RUNNING") (eq $state "PAUSE") (eq $state "PREPARE") (eq $state "SLICING") }}
+  {{ $hms := len ($s.JSON.Array "hms_errors") }}
+
+  {{ $label := "Idle" }}
+  {{ $dot := "var(--color-text-subdue)" }}
+  {{ if not $connected }}{{ $label = "Offline" }}{{ $dot = "var(--color-negative)" }}
+  {{ else if eq $state "RUNNING" }}{{ $label = "Printing" }}{{ $dot = "var(--color-primary)" }}
+  {{ else if eq $state "PREPARE" }}{{ $label = "Preparing" }}{{ $dot = "var(--color-primary)" }}
+  {{ else if eq $state "SLICING" }}{{ $label = "Slicing" }}{{ $dot = "var(--color-primary)" }}
+  {{ else if eq $state "PAUSE" }}{{ $label = "Paused" }}{{ $dot = "var(--color-negative)" }}
+  {{ else if eq $state "FINISH" }}{{ $label = "Finished" }}{{ $dot = "var(--color-positive)" }}
+  {{ else if eq $state "FAILED" }}{{ $label = "Failed" }}{{ $dot = "var(--color-negative)" }}
+  {{ else }}{{ $dot = "var(--color-positive)" }}{{ end }}
+
+  {{ if or $connected (not $hideOffline) }}
+  <li>
+    <div class="flex items-center gap-10">
+      <span class="shrink-0" title="{{ $label }}" style="width: 0.6rem; height: 0.6rem; border-radius: 50%; background-color: {{ safeCSS $dot }};"></span>
+      <div class="min-width-0 grow">
+        <a class="size-h4 color-highlight text-truncate block" href="{{ $base }}/" target="_blank" rel="noreferrer">{{ .String "name" }}</a>
+        {{ if ne $model "" }}<div class="size-h6 color-subdue text-truncate">{{ $model }}</div>{{ end }}
+      </div>
+      <div class="shrink-0 text-right size-h5 {{ if or (not $connected) (eq $state "FAILED") (eq $state "PAUSE") }}color-negative{{ else if $active }}color-primary{{ else }}color-subdue{{ end }}">
+        {{ $label }}{{ if gt $hms 0 }} · <span class="color-negative" title="Active HMS errors">⚠ {{ $hms }}</span>{{ end }}
+      </div>
+    </div>
+
+    {{ if and $connected $active }}
+    {{ $job := $s.JSON.String "subtask_name" }}
+    {{ if eq $job "" }}{{ $job = $s.JSON.String "current_print" }}{{ end }}
+    {{ $progress := $s.JSON.Int "progress" }}
+    {{ $remaining := $s.JSON.Int "remaining_time" }}
+    {{ $layer := $s.JSON.Int "layer_num" }}
+    {{ $layers := $s.JSON.Int "total_layers" }}
+    <div class="margin-top-7">
+      {{ if ne $job "" }}<div class="size-h6 color-base text-truncate" title="{{ $job }}">{{ $job }}</div>{{ end }}
+      <div class="progress-bar margin-top-3" style="height: 0.9rem;">
+        <div class="progress-value" style="--percent: {{ $progress }}"></div>
+      </div>
+      <div class="flex justify-between size-h6 color-subdue margin-top-3">
+        <span>{{ $progress }}%{{ if gt $layers 0 }} · Layer {{ $layer }}/{{ $layers }}{{ end }}</span>
+        {{ if gt $remaining 0 }}<span>{{ if ge $remaining 60 }}{{ div $remaining 60 }}h {{ end }}{{ mod $remaining 60 }}m left</span>{{ end }}
+      </div>
+    </div>
+    {{ end }}
+
+    {{ if and $connected (or $showTemps $showAMS $showCamera) }}
+    <div class="flex items-center justify-between gap-10 margin-top-5 size-h6 color-subdue">
+      <div class="flex items-center gap-10 flex-wrap">
+        {{ if $showCamera }}<a class="color-subdue flex items-center" href="{{ $base }}/camera/{{ .Int "id" }}" target="_blank" rel="noreferrer" title="Open camera feed" aria-label="Open camera feed for {{ .String "name" }}"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 1.1rem; height: 1.1rem;"><path d="M3.25 4A2.25 2.25 0 0 0 1 6.25v7.5A2.25 2.25 0 0 0 3.25 16h7.5A2.25 2.25 0 0 0 13 13.75v-7.5A2.25 2.25 0 0 0 10.75 4h-7.5ZM19 4.75a.75.75 0 0 0-1.28-.53l-3 3a.75.75 0 0 0-.22.53v4.5c0 .199.079.39.22.53l3 3a.75.75 0 0 0 1.28-.53V4.75Z" /></svg></a>{{ end }}
+        {{ if $showTemps }}
+        {{ if $s.JSON.Exists "temperatures.nozzle" }}<span title="Nozzle{{ if $s.JSON.Exists "temperatures.nozzle_target" }} (target {{ $s.JSON.Int "temperatures.nozzle_target" }}°C){{ end }}">Nozzle {{ printf "%.0f" ($s.JSON.Float "temperatures.nozzle") }}°</span>{{ end }}
+        {{ if $s.JSON.Exists "temperatures.nozzle_2" }}<span title="Second nozzle">Nozzle 2 {{ printf "%.0f" ($s.JSON.Float "temperatures.nozzle_2") }}°</span>{{ end }}
+        {{ if $s.JSON.Exists "temperatures.bed" }}<span title="Bed{{ if $s.JSON.Exists "temperatures.bed_target" }} (target {{ $s.JSON.Int "temperatures.bed_target" }}°C){{ end }}">Bed {{ printf "%.0f" ($s.JSON.Float "temperatures.bed") }}°</span>{{ end }}
+        {{ if $s.JSON.Exists "temperatures.chamber" }}<span title="Chamber">Chamber {{ printf "%.0f" ($s.JSON.Float "temperatures.chamber") }}°</span>{{ end }}
+        {{ end }}
+      </div>
+
+      {{ if $showAMS }}
+      <div class="flex items-center gap-5 shrink-0">
+        {{ range $s.JSON.Array "ams" }}
+          {{ range .Array "tray" }}
+            {{ $color := findMatch "^[0-9A-Fa-f]{6}" (.String "tray_color") }}
+            {{ $type := .String "tray_type" }}
+            {{ if and (ne $type "") (ne $color "") }}
+            <span title="{{ $type }}{{ with .String "tray_sub_brands" }} · {{ . }}{{ end }} · {{ .Int "remain" }}%" style="width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 1px solid var(--color-separator); background-color: {{ safeCSS (printf "#%s" $color) }};"></span>
+            {{ else }}
+            <span title="Empty slot" style="width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 1px dashed var(--color-text-subdue);"></span>
+            {{ end }}
+          {{ end }}
+        {{ end }}
+        {{ range $s.JSON.Array "vt_tray" }}
+          {{ $color := findMatch "^[0-9A-Fa-f]{6}" (.String "tray_color") }}
+          {{ $type := .String "tray_type" }}
+          {{ if and (ne $type "") (ne $color "") }}
+          <span title="External spool · {{ $type }}" style="width: 0.75rem; height: 0.75rem; border-radius: 2px; border: 1px solid var(--color-separator); background-color: {{ safeCSS (printf "#%s" $color) }};"></span>
+          {{ end }}
+        {{ end }}
+      </div>
+      {{ end }}
+    </div>
+    {{ end }}
+  </li>
+  {{ end }}
+  {{ end }}
+  {{ end }}
+</ul>
+{{ end }}
+
+required: |
+  subrequests:
+    printers:
+      url: ${BAMBUDDY_URL}/api/v1/printers/
+      headers:
+        X-API-Key: ${BAMBUDDY_API_KEY}
