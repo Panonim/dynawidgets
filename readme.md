@@ -10,6 +10,8 @@ You can also visit https://widgets.artur.zone/ for automated conversion.
 [B](#b) | [C](#c) | [G](#g) | [L](#l) | [P](#p) | [R](#r) | [T](#t) | [U](#u) | [W](#w)
 
 ## B
+- [**Bambuddy**](widgets/bambuddy/widget.md) — Live status of your BambuLab printers from Bambuddy.
+  - Author: EinfachRobin
 - [**Beszel Container Monitor**](widgets/beszel-container-monitor/widget.md) — Displays resource usage (CPU, memory, network), uptime, and health indicators for Docker containers via the Beszel API.
   - Author: DenushanGithub
 

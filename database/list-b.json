@@ -1,5 +1,12 @@
 [
   {
+    "title": "Bambuddy",
+    "description": "Live status of your BambuLab printers from Bambuddy.",
+    "author": "EinfachRobin",
+    "slug": "bambuddy",
+    "template": "https://raw.githubusercontent.com/Panonim/dynawidgets/refs/heads/main/widgets/bambuddy/template.txt"
+  },
+  {
     "title": "Beszel Container Monitor",
     "description": "Displays resource usage (CPU, memory, network), uptime, and health indicators for Docker containers via the Beszel API.",
     "author": "DenushanGithub",
